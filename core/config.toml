@@ -1,0 +1,16 @@
+[window]
+width = 1600
+height = 1000
+title = "gravitysim"
+vsync = true
+
+[simulation]
+default_particle_count = 4096
+max_particles = 65536
+default_integrator = "leapfrog"
+default_backend = "auto"
+default_kernel = "tiled"
+
+[trails]
+enabled = true
+max_history = 64

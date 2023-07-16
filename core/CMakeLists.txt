@@ -32,6 +32,31 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(openmp_adapter PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
+if(BUILD_CUDA)
+    add_library(cuda_adapter STATIC
+        src/lib/cuda/cuda_interop.cu
+        src/lib/cuda/cuda_step.cu
+        src/lib/cuda/kernels/kernel_global.cu
+        src/lib/cuda/kernels/kernel_tiled.cu
+        src/lib/cuda/kernels/kernel_float4.cu
+        src/lib/cuda/kernels/kernel_integrate.cu
+    )
+    target_include_directories(cuda_adapter PUBLIC src)
+    target_link_libraries(cuda_adapter PUBLIC sim_lib)
+    set_target_properties(cuda_adapter PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_STANDARD 17
+        CUDA_ARCHITECTURES "75;86;89"
+    )
+    target_compile_definitions(cuda_adapter PUBLIC GRAV_HAVE_CUDA=1)
+    set(_cuda_target cuda_adapter)
+else()
+    add_library(cuda_stub_adapter STATIC src/lib/cuda/cuda_stub.cpp)
+    target_include_directories(cuda_stub_adapter PUBLIC src)
+    target_link_libraries(cuda_stub_adapter PUBLIC sim_lib)
+    set(_cuda_target cuda_stub_adapter)
+endif()
+
 add_library(window_adapter STATIC
     src/lib/window/window.cpp
 )
@@ -77,6 +102,7 @@ target_link_libraries(simulator PRIVATE
     render_lib
     scenarios_lib
     openmp_adapter
+    ${_cuda_target}
 )
 
 target_compile_options(simulator PRIVATE

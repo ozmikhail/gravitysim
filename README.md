@@ -17,7 +17,7 @@ A from-scratch all-pairs N-body simulator for studying CUDA optimization techniq
 - OpenMP-parallel CPU backend for development without CUDA hardware
 - Dear ImGui controls: pause / step / reset, dt / G / softening sliders, integrator / kernel / scenario pickers
 - Built-in scenarios: random cluster, solar system, colliding galaxies
-- Speed-coloured point sprites with alpha blending
+- Speed-coloured point sprites and optional per-particle trails with alpha blending
 - Live FPS and particle-pairs/sec overlay
 - Catch2 unit tests covering integrators, scenarios, and metrics — no GL/CUDA dependency
 
@@ -59,6 +59,10 @@ The test executable links only `sim_lib + scenarios_lib + metrics_lib + openmp_a
 
 Startup-time knobs live in `core/config.toml` (window size, default particle count, integrator, kernel variant, max history). Runtime knobs (dt, G, paused, scenario selection) live in the ImGui panel.
 
+The `[trails]` section sets whether trails start enabled and the number of simulation
+samples retained per particle. The controls panel can toggle trails. History resets
+with the scenario, advances with the simulation, and is disabled below two samples.
+
 `max_particles` is fixed at startup because the GL VBO is registered with CUDA once and cannot grow.
 
 ## Optimization progression
@@ -75,7 +79,6 @@ Speedup numbers from your hardware go in `docs/kernels.md` (run `nsys profile ./
 
 ## Deferred (future work)
 
-- Per-particle trails (ring-buffer history VBO drawn as line strips)
 - Merge-on-collision kernel
 - Barnes-Hut O(N log N) tree-based force approximation
 - Frame / position-stream export

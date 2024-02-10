@@ -78,6 +78,7 @@ target_link_libraries(imgui_layer PUBLIC imgui error_lib)
 
 add_library(render_lib STATIC
     src/modules/render/particle_renderer.cpp
+    src/modules/render/trail_renderer.cpp
 )
 target_include_directories(render_lib PUBLIC src)
 target_link_libraries(render_lib PUBLIC sim_lib gl_adapter)

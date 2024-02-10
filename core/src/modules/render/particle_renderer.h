@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "modules/render/trail_renderer.h"
+
 namespace grav {
 struct Particles;
 }
@@ -12,7 +14,7 @@ namespace grav {
 
 class ParticleRenderer {
 public:
-    explicit ParticleRenderer(std::size_t max_particles);
+    explicit ParticleRenderer(std::size_t max_particles, std::size_t trail_history = 0);
     ~ParticleRenderer();
 
     ParticleRenderer(const ParticleRenderer&) = delete;
@@ -22,6 +24,8 @@ public:
 
     void upload_positions(const Particles& particles);
     void upload_speeds(const Particles& particles);
+    void clear_trails() noexcept { trails_.clear(); }
+    void record_trails(std::size_t count) { trails_.record(position_vbo_, count); }
 
     void draw(int framebuffer_width, int framebuffer_height, std::size_t count);
 
@@ -35,6 +39,7 @@ private:
     std::uint32_t speed_vbo_ = 0;
     std::size_t capacity_ = 0;
     std::vector<float> speed_buffer_;
+    TrailRenderer trails_;
 };
 
 }

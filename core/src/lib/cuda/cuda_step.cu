@@ -62,13 +62,15 @@ void ensure_capacity(Simulation& sim, std::size_t n) {
     const bool capacity_ok = existing != nullptr && existing->capacity >= n;
     const bool interop_match = existing != nullptr && existing->bound_vbo == sim.output_vbo;
     const bool needs_pos_mass = sim.params.kernel_variant == KernelVariant::Float4;
-    const bool pos_mass_ok =
-        existing != nullptr && (!needs_pos_mass || existing->d_pos_mass != nullptr);
-
-    if (capacity_ok && interop_match && pos_mass_ok) {
+    if (capacity_ok && interop_match) {
+        if (needs_pos_mass && existing->d_pos_mass == nullptr) {
+            GRAV_CUDA_CHECK(cudaMalloc(&existing->d_pos_mass, existing->capacity * sizeof(float4)));
+        }
         return;
     }
 
+    // CUDA only allows one registration for a given OpenGL buffer.
+    sim.backend_state.reset();
     auto state = std::make_unique<CudaSimState>();
     state->capacity = n;
     state->bound_vbo = sim.output_vbo;

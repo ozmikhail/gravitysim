@@ -67,6 +67,7 @@ int run(const Config& cfg) {
 
     const grav::imgui::Session imgui_session(window.handle(), window.dpi_scale());
 
+    grav::ParticleRenderer renderer(cfg.simulation.max_particles, cfg.trails.max_history);
     grav::Simulation simulation;
     simulation.backend = resolve_backend(cfg.simulation.default_backend);
     simulation.params.integrator = parse_integrator(cfg.simulation.default_integrator);
@@ -74,7 +75,7 @@ int run(const Config& cfg) {
 
     grav::reset(simulation, "colliding_galaxies", cfg.simulation.default_particle_count);
 
-    grav::ParticleRenderer renderer(cfg.simulation.max_particles);
+    renderer.upload_positions(simulation.particles);
     if (simulation.backend == grav::Backend::Cuda) {
         simulation.output_vbo = renderer.position_vbo();
     }
@@ -82,24 +83,35 @@ int run(const Config& cfg) {
     grav::MetricsTracker metrics;
     grav::ui::ControlsState controls{};
     controls.current_scenario = "colliding_galaxies";
+    controls.trails_enabled = cfg.trails.enabled;
+    controls.trail_history = cfg.trails.max_history;
+    controls.max_particles = cfg.simulation.max_particles;
+    bool trails_were_enabled = controls.trails_enabled;
+    if (controls.trails_enabled) {
+        renderer.record_trails(simulation.particles.count());
+    }
 
     while (!window.should_close()) {
         window.poll_events();
 
-        const bool advance = !controls.paused || controls.step_once_clicked;
-        if (advance) {
+        const bool reset = controls.reset_clicked || controls.scenario_changed;
+        const bool advance = !reset && (!controls.paused || controls.step_once_clicked);
+        if (reset) {
+            grav::reset(simulation, controls.current_scenario, cfg.simulation.default_particle_count);
+        } else if (advance) {
             grav::step(simulation);
         }
-        if (controls.reset_clicked) {
-            grav::reset(simulation, controls.current_scenario, cfg.simulation.default_particle_count);
-        }
-        if (controls.scenario_changed) {
-            grav::reset(simulation, controls.current_scenario, cfg.simulation.default_particle_count);
-        }
 
-        if (simulation.backend == grav::Backend::Cpu) {
+        if (reset || (advance && simulation.backend == grav::Backend::Cpu)) {
             renderer.upload_positions(simulation.particles);
         }
+        if (reset || !controls.trails_enabled) {
+            renderer.clear_trails();
+        }
+        if (controls.trails_enabled && (reset || advance || !trails_were_enabled)) {
+            renderer.record_trails(simulation.particles.count());
+        }
+        trails_were_enabled = controls.trails_enabled;
         renderer.upload_speeds(simulation.particles);
 
         grav::imgui::begin_frame();

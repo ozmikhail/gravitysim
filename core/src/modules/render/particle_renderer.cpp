@@ -42,7 +42,8 @@ void main() {
 
 }
 
-ParticleRenderer::ParticleRenderer(std::size_t max_particles) : capacity_(max_particles) {
+ParticleRenderer::ParticleRenderer(std::size_t max_particles, std::size_t trail_history)
+    : capacity_(max_particles), trails_(trail_history) {
     program_ = gl::compile_program(kVertexShader, kFragmentShader);
     speed_buffer_.assign(max_particles, 0.0F);
 
@@ -136,6 +137,8 @@ void ParticleRenderer::draw(int framebuffer_width, int framebuffer_height, std::
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    trails_.draw(aspect);
 
     glUseProgram(program_);
     glUniform1f(glGetUniformLocation(program_, "u_aspect"), aspect);

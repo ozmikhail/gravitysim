@@ -52,6 +52,9 @@ void draw_controls(ControlsState& state, SimParams& params) {
         }
 
         ImGui::Separator();
+        if (state.trail_history >= 2) {
+            ImGui::Checkbox("trails", &state.trails_enabled);
+        }
         ImGui::SliderFloat("dt", &params.dt, 0.0001F, 0.05F, "%.4f");
         ImGui::SliderFloat("G", &params.gravity, 0.0F, 5.0F, "%.3f");
         ImGui::SliderFloat("softening", &params.softening, 0.001F, 0.5F, "%.3f");
@@ -87,6 +90,9 @@ void draw_controls(ControlsState& state, SimParams& params) {
         ImGui::Separator();
         if (ImGui::BeginCombo("scenario", state.current_scenario.c_str())) {
             for (auto candidate : grav::scenarios::available) {
+                if (candidate == "solar_system" && state.max_particles < 9) {
+                    continue;
+                }
                 const bool selected = state.current_scenario == candidate;
                 if (ImGui::Selectable(std::string(candidate).c_str(), selected)) {
                     if (state.current_scenario != candidate) {

@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <initializer_list>
+#include <limits>
 #include <string>
 #include <string_view>
 
@@ -35,6 +36,9 @@ void validate(const Config& cfg) {
     if (cfg.window.width <= 0 || cfg.window.height <= 0) {
         throw AppError::invalid_input("config: window dimensions must be positive");
     }
+    if (cfg.simulation.max_particles > static_cast<std::size_t>(std::numeric_limits<int>::max() / 3)) {
+        throw AppError::invalid_input("config: max_particles exceeds the particle index limit");
+    }
     if (cfg.simulation.default_particle_count > cfg.simulation.max_particles) {
         throw AppError::invalid_input(
             "config: default_particle_count exceeds max_particles"
@@ -43,9 +47,10 @@ void validate(const Config& cfg) {
 
     constexpr std::size_t trail_byte_cap = 512ULL * 1024 * 1024;
     constexpr std::size_t bytes_per_position = sizeof(float) * 3;
-    const std::size_t trail_bytes =
-        cfg.trails.max_history * cfg.simulation.max_particles * bytes_per_position;
-    if (trail_bytes > trail_byte_cap) {
+    const auto max_trail_vertices = trail_byte_cap / bytes_per_position;
+    if (cfg.trails.max_history > max_trail_vertices ||
+        (cfg.trails.max_history >= 2 &&
+         cfg.simulation.max_particles > max_trail_vertices / cfg.trails.max_history)) {
         throw AppError::invalid_input("config: trail buffer exceeds 512MB cap");
     }
 

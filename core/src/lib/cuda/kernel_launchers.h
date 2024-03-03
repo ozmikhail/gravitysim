@@ -41,6 +41,10 @@ void launch_compute_forces_float4(
     cudaStream_t stream
 );
 
+void launch_find_collisions(
+    const float* positions, int* parents, int n, float radius_sq, cudaStream_t stream
+);
+
 void launch_integrate_euler(
     float* d_positions,
     float* d_velocities,

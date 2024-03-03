@@ -9,6 +9,7 @@ add_library(metrics_lib STATIC
 target_include_directories(metrics_lib PUBLIC src)
 
 add_library(sim_lib STATIC
+    src/modules/sim/collisions.cpp
     src/modules/sim/particles.cpp
     src/modules/sim/simulation.cpp
 )
@@ -40,6 +41,7 @@ if(BUILD_CUDA)
         src/lib/cuda/kernels/kernel_tiled.cu
         src/lib/cuda/kernels/kernel_float4.cu
         src/lib/cuda/kernels/kernel_integrate.cu
+        src/lib/cuda/kernels/kernel_collisions.cu
     )
     target_include_directories(cuda_adapter PUBLIC src)
     target_link_libraries(cuda_adapter PUBLIC sim_lib)
@@ -51,10 +53,13 @@ if(BUILD_CUDA)
     target_compile_definitions(cuda_adapter PUBLIC GRAV_HAVE_CUDA=1)
     set(_cuda_target cuda_adapter)
 else()
+    set(_cuda_target cuda_stub_adapter)
+endif()
+
+if(NOT BUILD_CUDA OR BUILD_TESTS)
     add_library(cuda_stub_adapter STATIC src/lib/cuda/cuda_stub.cpp)
     target_include_directories(cuda_stub_adapter PUBLIC src)
     target_link_libraries(cuda_stub_adapter PUBLIC sim_lib)
-    set(_cuda_target cuda_stub_adapter)
 endif()
 
 add_library(window_adapter STATIC

@@ -22,6 +22,10 @@ endif()
 option(BUILD_CUDA "Build CUDA backend" ${_default_build_cuda})
 option(BUILD_TESTS "Build tests" ON)
 
+if(BUILD_CUDA)
+    enable_language(CUDA)
+endif()
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(_grav_venv_dir ${CMAKE_BINARY_DIR}/_grav_venv)
 if(NOT EXISTS ${_grav_venv_dir}/bin/python)

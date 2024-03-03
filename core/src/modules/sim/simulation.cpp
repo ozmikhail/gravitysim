@@ -6,6 +6,7 @@
 
 #include "error.h"
 #include "modules/scenarios/scenarios.h"
+#include "modules/sim/collisions.h"
 
 namespace grav {
 
@@ -16,6 +17,9 @@ void step(Simulation& sim) {
     switch (sim.backend) {
     case Backend::Cpu:
         cpu_step(sim.particles, sim.params);
+        if (sim.params.merge_on_collision) {
+            merge_collisions(sim.particles, sim.params.merge_radius);
+        }
         return;
     case Backend::Cuda:
         cuda_step(sim);

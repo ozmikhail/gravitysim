@@ -40,6 +40,11 @@ struct Particles {
     std::vector<Vec3> velocities;
     std::vector<Vec3> accelerations;
     std::vector<float> masses;
+    std::vector<std::size_t> ids;
+
+    [[nodiscard]] std::size_t id(std::size_t index) const noexcept {
+        return ids.size() == count() ? ids[index] : index;
+    }
 
     [[nodiscard]] std::size_t count() const noexcept { return positions.size(); }
 

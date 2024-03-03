@@ -5,7 +5,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <format>
 #include <string>
 
 #include "error.h"
@@ -19,7 +18,7 @@ namespace {
         cudaError_t _e = (expr);                                                    \
         if (_e != cudaSuccess) {                                                    \
             throw AppError::dependency_unavailable(                                 \
-                std::format("cuda interop: {}: {}", #expr, cudaGetErrorString(_e))  \
+                std::string("cuda interop: " #expr ": ") + cudaGetErrorString(_e)  \
             );                                                                      \
         }                                                                           \
     } while (0)

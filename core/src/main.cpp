@@ -88,7 +88,7 @@ int run(const Config& cfg) {
     controls.max_particles = cfg.simulation.max_particles;
     bool trails_were_enabled = controls.trails_enabled;
     if (controls.trails_enabled) {
-        renderer.record_trails(simulation.particles.count());
+        renderer.record_trails(simulation.particles);
     }
 
     while (!window.should_close()) {
@@ -109,7 +109,7 @@ int run(const Config& cfg) {
             renderer.clear_trails();
         }
         if (controls.trails_enabled && (reset || advance || !trails_were_enabled)) {
-            renderer.record_trails(simulation.particles.count());
+            renderer.record_trails(simulation.particles);
         }
         trails_were_enabled = controls.trails_enabled;
         renderer.upload_speeds(simulation.particles);

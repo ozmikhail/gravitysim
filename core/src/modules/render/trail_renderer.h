@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "modules/sim/particles.h"
+
 namespace grav {
 
 class TrailRenderer {
@@ -15,7 +17,7 @@ public:
     TrailRenderer& operator=(const TrailRenderer&) = delete;
 
     void clear() noexcept;
-    void record(std::uint32_t position_vbo, std::size_t count);
+    void record(std::uint32_t position_vbo, const Particles& particles);
     void draw(float aspect) const;
 
 private:
@@ -29,6 +31,8 @@ private:
     std::uint32_t vao_ = 0;
     std::uint32_t history_vbo_ = 0;
     std::uint32_t index_buffer_ = 0;
+    std::vector<Vec3> frame_;
+    std::vector<Vec3> compact_frame_;
     std::vector<int> draw_counts_;
     std::vector<const void*> draw_offsets_;
 };

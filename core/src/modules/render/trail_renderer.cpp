@@ -6,7 +6,6 @@
 
 #include "lib/gl/gl.h"
 #include "lib/gl/shader.h"
-#include "modules/sim/particles.h"
 
 namespace grav {
 
@@ -80,28 +79,44 @@ void TrailRenderer::allocate(std::size_t count) {
     gl::check("allocate trail history");
 }
 
-void TrailRenderer::record(std::uint32_t position_vbo, std::size_t count) {
+void TrailRenderer::record(std::uint32_t position_vbo, const Particles& particles) {
+    const auto count = particles.count();
     if (history_ < 2 || count == 0) {
         return;
     }
-    if (slots_ != count) {
-        allocate(count);
+    const auto slots_needed = particles.id(count - 1) + 1;
+    if (slots_ < slots_needed) {
+        allocate(slots_needed);
     }
 
-    const auto frame_bytes = slots_ * sizeof(Vec3);
-    glBindBuffer(GL_COPY_READ_BUFFER, position_vbo);
+    const auto offset = next_ * slots_ * sizeof(Vec3);
     glBindBuffer(GL_COPY_WRITE_BUFFER, history_vbo_);
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, next_ * frame_bytes, frame_bytes);
+    if (slots_needed == count) {
+        glBindBuffer(GL_COPY_READ_BUFFER, position_vbo);
+        glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, offset, count * sizeof(Vec3));
+    } else {
+        // Compaction leaves gaps in the stable IDs. Scatter the compact VBO
+        // into its original history slots so surviving particles keep their trails.
+        compact_frame_.resize(count);
+        frame_.resize(slots_needed);
+        glBindBuffer(GL_COPY_READ_BUFFER, position_vbo);
+        glGetBufferSubData(GL_COPY_READ_BUFFER, 0, count * sizeof(Vec3), compact_frame_.data());
+        for (std::size_t i = 0; i < count; ++i) {
+            frame_[particles.id(i)] = compact_frame_[i];
+        }
+        glBufferSubData(GL_COPY_WRITE_BUFFER, offset, slots_needed * sizeof(Vec3), frame_.data());
+    }
     glBindBuffer(GL_COPY_READ_BUFFER, 0);
     glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 
     next_ = (next_ + 1) % history_;
     samples_ = std::min(samples_ + 1, history_);
     const auto oldest = (next_ + history_ - samples_) % history_;
-    std::fill(draw_counts_.begin(), draw_counts_.end(), static_cast<GLsizei>(samples_));
-    for (std::size_t slot = 0; slot < slots_; ++slot) {
-        const auto offset = (slot * history_ * 2 + oldest) * sizeof(GLuint);
-        draw_offsets_[slot] = reinterpret_cast<const void*>(offset);
+    draw_counts_.assign(count, static_cast<GLsizei>(samples_));
+    draw_offsets_.resize(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        const auto index_offset = (particles.id(i) * history_ * 2 + oldest) * sizeof(GLuint);
+        draw_offsets_[i] = reinterpret_cast<const void*>(index_offset);
     }
 }
 
@@ -114,7 +129,7 @@ void TrailRenderer::draw(float aspect) const {
     glBindVertexArray(vao_);
     glMultiDrawElements(
         GL_LINE_STRIP, draw_counts_.data(), GL_UNSIGNED_INT, draw_offsets_.data(),
-        static_cast<GLsizei>(slots_)
+        static_cast<GLsizei>(draw_offsets_.size())
     );
 }
 

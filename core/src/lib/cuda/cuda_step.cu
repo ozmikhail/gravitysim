@@ -1,13 +1,14 @@
 #include <cuda_runtime.h>
 
 #include <cstddef>
-#include <format>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "error.h"
 #include "lib/cuda/cuda_interop.h"
 #include "lib/cuda/kernel_launchers.h"
+#include "modules/sim/collisions.h"
 #include "modules/sim/particles.h"
 #include "modules/sim/simulation.h"
 
@@ -20,7 +21,7 @@ namespace {
         cudaError_t _e = (expr);                                            \
         if (_e != cudaSuccess) {                                            \
             throw AppError::dependency_unavailable(                         \
-                std::format("cuda: {}: {}", #expr, cudaGetErrorString(_e))  \
+                std::string("cuda: " #expr ": ") + cudaGetErrorString(_e)  \
             );                                                              \
         }                                                                   \
     } while (0)
@@ -32,6 +33,8 @@ struct CudaSimState {
     float* d_masses = nullptr;
     float* d_accelerations = nullptr;
     float4* d_pos_mass = nullptr;
+    int* d_parents = nullptr;
+    std::vector<int> parents;
     std::size_t capacity = 0;
     std::uint32_t bound_vbo = 0;
     cudaStream_t stream = nullptr;
@@ -42,6 +45,7 @@ struct CudaSimState {
         if (d_masses != nullptr) cudaFree(d_masses);
         if (d_accelerations != nullptr) cudaFree(d_accelerations);
         if (d_pos_mass != nullptr) cudaFree(d_pos_mass);
+        if (d_parents != nullptr) cudaFree(d_parents);
         if (stream != nullptr) cudaStreamDestroy(stream);
     }
 };
@@ -124,6 +128,24 @@ void launch_force_kernel(
     }
 }
 
+bool find_collisions(CudaSimState& state, const float* positions, int n, float radius) {
+    if (state.d_parents == nullptr) {
+        GRAV_CUDA_CHECK(cudaMalloc(&state.d_parents, state.capacity * sizeof(int)));
+    }
+    state.parents.resize(n);
+    launch_find_collisions(positions, state.d_parents, n, radius * radius, state.stream);
+    GRAV_CUDA_CHECK(cudaMemcpyAsync(
+        state.parents.data(), state.d_parents, n * sizeof(int), cudaMemcpyDeviceToHost, state.stream
+    ));
+    GRAV_CUDA_CHECK(cudaStreamSynchronize(state.stream));
+    for (int i = 0; i < n; ++i) {
+        if (state.parents[i] != i) {
+            return true;
+        }
+    }
+    return false;
+}
+
 }
 
 void cuda_step(Simulation& sim) {
@@ -177,19 +199,32 @@ void cuda_step(Simulation& sim) {
         launch_integrate_euler(d_pos, s->d_velocities, s->d_accelerations, ni, dt, s->stream);
     }
 
-    if (s->position_interop != nullptr) {
-        s->position_interop->unmap(s->stream);
-    } else {
-        GRAV_CUDA_CHECK(cudaMemcpyAsync(
-            sim.particles.positions.data(), d_pos, pos_bytes,
-            cudaMemcpyDeviceToHost, s->stream
-        ));
-    }
     GRAV_CUDA_CHECK(cudaMemcpyAsync(
         sim.particles.velocities.data(), s->d_velocities, pos_bytes,
         cudaMemcpyDeviceToHost, s->stream
     ));
 
+    const bool collided = sim.params.merge_on_collision && ni > 1 && sim.params.merge_radius > 0.0F
+                          && find_collisions(*s, d_pos, ni, sim.params.merge_radius);
+    if (s->position_interop == nullptr || collided) {
+        GRAV_CUDA_CHECK(cudaMemcpyAsync(
+            sim.particles.positions.data(), d_pos, pos_bytes,
+            cudaMemcpyDeviceToHost, s->stream
+        ));
+    }
+    if (collided) {
+        GRAV_CUDA_CHECK(cudaStreamSynchronize(s->stream));
+        merge_collision_groups(sim.particles, s->parents);
+        if (s->position_interop != nullptr) {
+            GRAV_CUDA_CHECK(cudaMemcpyAsync(
+                d_pos, sim.particles.positions.data(), sim.particles.count() * sizeof(Vec3),
+                cudaMemcpyHostToDevice, s->stream
+            ));
+        }
+    }
+    if (s->position_interop != nullptr) {
+        s->position_interop->unmap(s->stream);
+    }
     GRAV_CUDA_CHECK(cudaStreamSynchronize(s->stream));
     GRAV_CUDA_CHECK(cudaPeekAtLastError());
 }

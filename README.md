@@ -16,6 +16,7 @@ A from-scratch all-pairs N-body simulator for studying CUDA optimization techniq
 - Zero-copy CUDA-OpenGL interop — kernels write to the rendered VBO directly
 - OpenMP-parallel CPU backend for development without CUDA hardware
 - Dear ImGui controls: pause / step / reset, dt / G / softening sliders, integrator / kernel / scenario pickers
+- Optional collision merging on CPU and CUDA with mass and momentum conservation
 - Built-in scenarios: random cluster, solar system, colliding galaxies
 - Speed-coloured point sprites and optional per-particle trails with alpha blending
 - Live FPS and particle-pairs/sec overlay
@@ -63,6 +64,12 @@ The `[trails]` section sets whether trails start enabled and the number of simul
 samples retained per particle. The controls panel can toggle trails. History resets
 with the scenario, advances with the simulation, and is disabled below two samples.
 
+Enable **merge on collision** to combine overlapping bodies after each step. The
+merge distance is a center-to-center threshold. Each connected group combines into
+its lowest-ID particle, keeping that particle's trail and conserving total mass
+and linear momentum. Detection samples the end of the step, so reduce `dt` for
+fast-moving bodies that can pass through each other between samples.
+
 `max_particles` is fixed at startup because the GL VBO is registered with CUDA once and cannot grow.
 
 ## Optimization progression
@@ -79,7 +86,6 @@ Speedup numbers from your hardware go in `docs/kernels.md` (run `nsys profile ./
 
 ## Deferred (future work)
 
-- Merge-on-collision kernel
 - Barnes-Hut O(N log N) tree-based force approximation
 - Frame / position-stream export
 - SPH fluid and electrostatic-charge variants

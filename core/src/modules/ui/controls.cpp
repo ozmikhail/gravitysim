@@ -58,6 +58,10 @@ void draw_controls(ControlsState& state, SimParams& params) {
         ImGui::SliderFloat("dt", &params.dt, 0.0001F, 0.05F, "%.4f");
         ImGui::SliderFloat("G", &params.gravity, 0.0F, 5.0F, "%.3f");
         ImGui::SliderFloat("softening", &params.softening, 0.001F, 0.5F, "%.3f");
+        ImGui::Checkbox("merge on collision", &params.merge_on_collision);
+        if (params.merge_on_collision) {
+            ImGui::SliderFloat("merge distance", &params.merge_radius, 0.0001F, 0.1F, "%.4f");
+        }
 
         ImGui::Separator();
         if (ImGui::BeginCombo("integrator", integrator_label(params.integrator))) {

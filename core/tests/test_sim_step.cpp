@@ -40,3 +40,31 @@ TEST_CASE("reset to random_cluster sizes particle arrays", "[sim]") {
     REQUIRE(sim.particles.velocities.size() == 256);
     REQUIRE(sim.particles.masses.size() == 256);
 }
+
+TEST_CASE("collisions merge connected bodies and preserve survivor IDs", "[sim][collision]") {
+    grav::Simulation sim;
+    sim.params.gravity = 0.0F;
+    sim.params.dt = 0.0F;
+    sim.params.merge_on_collision = true;
+    sim.params.merge_radius = 0.1F;
+    auto& p = sim.particles;
+    p.resize(4);
+    p.positions = {{0.0F, 0.0F, 0.0F}, {0.08F, 0.0F, 0.0F},
+                   {0.16F, 0.0F, 0.0F}, {1.0F, 0.0F, 0.0F}};
+    p.velocities = {{2.0F, 0.0F, 0.0F}, {-1.0F, 0.0F, 0.0F}, {}, {}};
+    p.masses = {2.0F, 3.0F, 1.0F, 7.0F};
+
+    grav::step(sim);
+
+    REQUIRE(p.count() == 2);
+    REQUIRE(p.id(0) == 0);
+    REQUIRE(p.id(1) == 3);
+    REQUIRE(p.masses[0] == 6.0F);
+    REQUIRE(p.masses[1] == 7.0F);
+    REQUIRE(std::abs(p.positions[0].x - 0.4F / 6.0F) < 1e-6F);
+    REQUIRE(std::abs(p.velocities[0].x * p.masses[0] - 1.0F) < 1e-6F);
+    REQUIRE(p.velocities.size() == p.count());
+    REQUIRE(p.accelerations.size() == p.count());
+    grav::step(sim);
+    REQUIRE(p.id(1) == 3);
+}

@@ -25,7 +25,7 @@ public:
     void upload_positions(const Particles& particles);
     void upload_speeds(const Particles& particles);
     void clear_trails() noexcept { trails_.clear(); }
-    void record_trails(std::size_t count) { trails_.record(position_vbo_, count); }
+    void record_trails(const Particles& particles) { trails_.record(position_vbo_, particles); }
 
     void draw(int framebuffer_width, int framebuffer_height, std::size_t count);
 

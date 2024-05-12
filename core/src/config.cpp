@@ -3,6 +3,7 @@
 #include <toml++/toml.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <initializer_list>
@@ -64,6 +65,13 @@ void validate(const Config& cfg) {
             "config: default_backend must be auto, cpu, or cuda"
         );
     }
+    if (!one_of(cfg.simulation.default_force, {"direct", "barnes_hut"})) {
+        throw AppError::invalid_input("config: default_force must be direct or barnes_hut");
+    }
+    const float theta = cfg.simulation.barnes_hut_theta;
+    if (!std::isfinite(theta) || theta < 0.0F || theta > 1.5F) {
+        throw AppError::invalid_input("config: barnes_hut_theta must be between 0 and 1.5");
+    }
     if (!one_of(cfg.simulation.default_kernel, {"global", "tiled", "float4"})) {
         throw AppError::invalid_input(
             "config: default_kernel must be global, tiled, or float4"
@@ -122,6 +130,13 @@ Config Config::load(const std::filesystem::path& path) {
     );
     cfg.simulation.default_kernel = section_value<std::string>(
         tbl, "simulation", "default_kernel", cfg.simulation.default_kernel
+    );
+
+    cfg.simulation.default_force = section_value<std::string>(
+        tbl, "simulation", "default_force", cfg.simulation.default_force
+    );
+    cfg.simulation.barnes_hut_theta = section_value<float>(
+        tbl, "simulation", "barnes_hut_theta", cfg.simulation.barnes_hut_theta
     );
 
     cfg.trails.enabled = section_value<bool>(tbl, "trails", "enabled", cfg.trails.enabled);

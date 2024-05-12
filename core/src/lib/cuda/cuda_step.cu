@@ -163,7 +163,8 @@ void cuda_step(Simulation& sim) {
     float* d_pos = s->d_positions;
     if (s->position_interop != nullptr) {
         d_pos = static_cast<float*>(s->position_interop->map(s->stream));
-    } else {
+    }
+    if (s->position_interop == nullptr || !sim.positions_on_device) {
         GRAV_CUDA_CHECK(cudaMemcpyAsync(
             d_pos, sim.particles.positions.data(), pos_bytes,
             cudaMemcpyHostToDevice, s->stream
@@ -227,6 +228,18 @@ void cuda_step(Simulation& sim) {
     }
     GRAV_CUDA_CHECK(cudaStreamSynchronize(s->stream));
     GRAV_CUDA_CHECK(cudaPeekAtLastError());
+    sim.positions_on_device = s->position_interop != nullptr;
+}
+
+void cuda_download_positions(Simulation& sim) {
+    auto& state = *state_of(sim);
+    const void* positions = state.position_interop->map(state.stream);
+    GRAV_CUDA_CHECK(cudaMemcpyAsync(
+        sim.particles.positions.data(), positions, sim.particles.count() * sizeof(Vec3),
+        cudaMemcpyDeviceToHost, state.stream
+    ));
+    state.position_interop->unmap(state.stream);
+    GRAV_CUDA_CHECK(cudaStreamSynchronize(state.stream));
 }
 
 }

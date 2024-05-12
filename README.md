@@ -11,7 +11,7 @@ A from-scratch all-pairs N-body simulator for studying CUDA optimization techniq
 
 ## Features
 
-- O(N²) gravitational simulation with Euler and symplectic Leapfrog integrators
+- Direct O(N²) gravity and Barnes-Hut octree gravity with Euler and Leapfrog integrators
 - Three CUDA force kernels selectable at runtime: `global`, `tiled`, `float4`
 - Zero-copy CUDA-OpenGL interop — kernels write to the rendered VBO directly
 - OpenMP-parallel CPU backend for development without CUDA hardware
@@ -70,6 +70,12 @@ its lowest-ID particle, keeping that particle's trail and conserving total mass
 and linear momentum. Detection samples the end of the step, so reduce `dt` for
 fast-moving bodies that can pass through each other between samples.
 
+Set `simulation.default_force = "barnes_hut"` or use the **force model** picker
+to use the CPU/OpenMP octree. Barnes-Hut typically takes O(N log N) per force
+evaluation. `simulation.barnes_hut_theta` controls the opening angle. Higher values
+accept more approximations, and zero opens all branches. Switching from CUDA to
+Barnes-Hut starts from the current positions and velocities.
+
 `max_particles` is fixed at startup because the GL VBO is registered with CUDA once and cannot grow.
 
 ## Optimization progression
@@ -86,7 +92,6 @@ Speedup numbers from your hardware go in `docs/kernels.md` (run `nsys profile ./
 
 ## Deferred (future work)
 
-- Barnes-Hut O(N log N) tree-based force approximation
 - Frame / position-stream export
 - SPH fluid and electrostatic-charge variants
 

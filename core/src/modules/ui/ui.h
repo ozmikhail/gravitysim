@@ -4,7 +4,7 @@
 #include <string>
 
 #include "modules/metrics/metrics.h"
-#include "modules/sim/params.h"
+#include "modules/sim/simulation.h"
 
 namespace grav::ui {
 
@@ -21,6 +21,6 @@ struct ControlsState {
 
 void draw_metrics_overlay(const FrameMetrics& metrics);
 
-void draw_controls(ControlsState& state, SimParams& params);
+void draw_controls(ControlsState& state, Simulation& sim);
 
 }

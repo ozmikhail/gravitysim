@@ -72,6 +72,10 @@ int run(const Config& cfg) {
     simulation.backend = resolve_backend(cfg.simulation.default_backend);
     simulation.params.integrator = parse_integrator(cfg.simulation.default_integrator);
     simulation.params.kernel_variant = parse_kernel(cfg.simulation.default_kernel);
+    if (cfg.simulation.default_force == "barnes_hut") {
+        simulation.params.force_model = grav::ForceModel::BarnesHut;
+    }
+    simulation.params.barnes_hut_theta = cfg.simulation.barnes_hut_theta;
 
     grav::reset(simulation, "colliding_galaxies", cfg.simulation.default_particle_count);
 
@@ -102,7 +106,7 @@ int run(const Config& cfg) {
             grav::step(simulation);
         }
 
-        if (reset || (advance && simulation.backend == grav::Backend::Cpu)) {
+        if (reset || (advance && !simulation.positions_on_device)) {
             renderer.upload_positions(simulation.particles);
         }
         if (reset || !controls.trails_enabled) {
@@ -117,7 +121,7 @@ int run(const Config& cfg) {
         grav::imgui::begin_frame();
         metrics.record_frame(simulation.particles.count());
         grav::ui::draw_metrics_overlay(metrics.snapshot());
-        grav::ui::draw_controls(controls, simulation.params);
+        grav::ui::draw_controls(controls, simulation);
 
         const auto [fb_w, fb_h] = window.framebuffer_size();
         grav::gl::set_viewport(fb_w, fb_h);

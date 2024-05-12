@@ -5,17 +5,26 @@
 #include <string_view>
 
 #include "error.h"
+#include "lib/openmp/nbody_cpu.h"
 #include "modules/scenarios/scenarios.h"
 #include "modules/sim/collisions.h"
 
 namespace grav {
 
-void cpu_step(Particles& particles, const SimParams& params);
 void cuda_step(Simulation& sim);
+void cuda_download_positions(Simulation& sim);
+
+void sync_positions(Simulation& sim) {
+    if (sim.positions_on_device) {
+        cuda_download_positions(sim);
+    }
+}
 
 void step(Simulation& sim) {
-    switch (sim.backend) {
+    switch (active_backend(sim)) {
     case Backend::Cpu:
+        sync_positions(sim);
+        sim.positions_on_device = false;
         cpu_step(sim.particles, sim.params);
         if (sim.params.merge_on_collision) {
             merge_collisions(sim.particles, sim.params.merge_radius);
@@ -37,6 +46,7 @@ void reset(Simulation& sim, std::string_view scenario_name, std::size_t count) {
     } else {
         throw AppError::not_found(std::string("scenario: ") + std::string(scenario_name));
     }
+    sim.positions_on_device = false;
 }
 
 }

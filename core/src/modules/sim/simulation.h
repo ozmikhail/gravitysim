@@ -23,8 +23,14 @@ struct Simulation {
     SimParams params;
     BackendStatePtr backend_state = empty_backend_state();
     std::uint32_t output_vbo = 0;
+    bool positions_on_device = false;
 };
 
+[[nodiscard]] inline Backend active_backend(const Simulation& sim) noexcept {
+    return sim.params.force_model == ForceModel::Direct ? sim.backend : Backend::Cpu;
+}
+
+void sync_positions(Simulation& sim);
 void step(Simulation& sim);
 void reset(Simulation& sim, std::string_view scenario_name, std::size_t count);
 

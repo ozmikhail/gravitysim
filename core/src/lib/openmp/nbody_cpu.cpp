@@ -1,8 +1,9 @@
 #include "lib/openmp/nbody_cpu.h"
 
-#include <cmath>
 #include <cstddef>
 
+#include "lib/openmp/barnes_hut.h"
+#include "lib/openmp/gravity_force.h"
 #include "modules/sim/params.h"
 #include "modules/sim/particles.h"
 
@@ -10,7 +11,7 @@ namespace grav {
 
 namespace {
 
-void compute_accelerations(Particles& p, float gravity, float softening_sq) {
+void compute_direct_gravity(Particles& p, float gravity, float softening_sq) {
     const std::size_t n = p.count();
 
 #pragma omp parallel for schedule(static) default(none)                            \
@@ -22,13 +23,17 @@ void compute_accelerations(Particles& p, float gravity, float softening_sq) {
             if (j == static_cast<std::size_t>(i)) {
                 continue;
             }
-            const Vec3 d = p.positions[j] - ri;
-            const float r2 = (d.x * d.x) + (d.y * d.y) + (d.z * d.z) + softening_sq;
-            const float inv_r3 = 1.0F / (r2 * std::sqrt(r2));
-            const float k = gravity * p.masses[j] * inv_r3;
-            a += d * k;
+            a += softened_acceleration(p.positions[j] - ri, gravity * p.masses[j], softening_sq);
         }
         p.accelerations[i] = a;
+    }
+}
+
+void compute_accelerations(Particles& p, const SimParams& params, float eps2) {
+    if (params.force_model == ForceModel::BarnesHut) {
+        compute_barnes_hut(p, params.gravity, eps2, params.barnes_hut_theta);
+    } else {
+        compute_direct_gravity(p, params.gravity, eps2);
     }
 }
 
@@ -51,7 +56,7 @@ void cpu_step(Particles& p, const SimParams& params) {
         for (std::size_t i = 0; i < n; ++i) {
             p.positions[i] += p.velocities[i] * half_dt;
         }
-        compute_accelerations(p, params.gravity, eps2);
+        compute_accelerations(p, params, eps2);
         for (std::size_t i = 0; i < n; ++i) {
             p.velocities[i] += p.accelerations[i] * dt;
             p.positions[i] += p.velocities[i] * half_dt;
@@ -59,7 +64,7 @@ void cpu_step(Particles& p, const SimParams& params) {
         return;
     }
 
-    compute_accelerations(p, params.gravity, eps2);
+    compute_accelerations(p, params, eps2);
     for (std::size_t i = 0; i < n; ++i) {
         p.velocities[i] += p.accelerations[i] * dt;
         p.positions[i] += p.velocities[i] * dt;

@@ -17,6 +17,8 @@ struct SimulationConfig {
     std::string default_integrator = "leapfrog";
     std::string default_backend = "auto";
     std::string default_kernel = "tiled";
+    std::string default_force = "direct";
+    float barnes_hut_theta = 0.6F;
 };
 
 struct TrailsConfig {

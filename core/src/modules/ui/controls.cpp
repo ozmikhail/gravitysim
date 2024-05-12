@@ -19,6 +19,16 @@ const char* integrator_label(Integrator integrator) {
     return "unknown";
 }
 
+const char* force_label(ForceModel model) {
+    switch (model) {
+    case ForceModel::Direct:
+        return "direct gravity";
+    case ForceModel::BarnesHut:
+        return "Barnes-Hut gravity";
+    }
+    return "unknown";
+}
+
 const char* kernel_label(KernelVariant variant) {
     switch (variant) {
     case KernelVariant::Global:
@@ -33,7 +43,8 @@ const char* kernel_label(KernelVariant variant) {
 
 }
 
-void draw_controls(ControlsState& state, SimParams& params) {
+void draw_controls(ControlsState& state, Simulation& sim) {
+    auto& params = sim.params;
     state.step_once_clicked = false;
     state.reset_clicked = false;
     state.scenario_changed = false;
@@ -77,7 +88,25 @@ void draw_controls(ControlsState& state, SimParams& params) {
             ImGui::EndCombo();
         }
 
-        if (ImGui::BeginCombo("cuda kernel", kernel_label(params.kernel_variant))) {
+        if (ImGui::BeginCombo("force model", force_label(params.force_model))) {
+            for (auto candidate : {ForceModel::Direct, ForceModel::BarnesHut}) {
+                const bool selected = params.force_model == candidate;
+                if (ImGui::Selectable(force_label(candidate), selected)) {
+                    params.force_model = candidate;
+                }
+                if (selected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+        if (params.force_model == ForceModel::BarnesHut) {
+            ImGui::SliderFloat("theta", &params.barnes_hut_theta, 0.0F, 1.5F, "%.2f");
+        }
+
+        const bool cuda = active_backend(sim) == Backend::Cuda;
+        ImGui::Text("backend: %s", cuda ? "CUDA" : "CPU");
+        if (cuda && ImGui::BeginCombo("cuda kernel", kernel_label(params.kernel_variant))) {
             for (auto candidate :
                  {KernelVariant::Global, KernelVariant::Tiled, KernelVariant::Float4}) {
                 const bool selected = params.kernel_variant == candidate;

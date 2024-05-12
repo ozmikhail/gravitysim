@@ -22,6 +22,7 @@ int root_of(std::vector<int>& parents, int index) {
 
 void merge_collision_groups(Particles& p, std::vector<int>& parents) {
     const auto n = p.count();
+    p.accelerations.resize(n);
     if (p.ids.size() != n) {
         p.ids.resize(n);
         std::iota(p.ids.begin(), p.ids.end(), std::size_t{0});

@@ -25,6 +25,7 @@ target_include_directories(scenarios_lib PUBLIC src)
 target_link_libraries(scenarios_lib PUBLIC sim_lib)
 
 add_library(openmp_adapter STATIC
+    src/lib/openmp/barnes_hut.cpp
     src/lib/openmp/nbody_cpu.cpp
 )
 target_include_directories(openmp_adapter PUBLIC src)
@@ -106,6 +107,7 @@ target_link_libraries(simulator PRIVATE
     imgui_layer
     ui_lib
     render_lib
+    sim_lib
     scenarios_lib
     openmp_adapter
     ${_cuda_target}

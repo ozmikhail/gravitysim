@@ -68,3 +68,41 @@ TEST_CASE("collisions merge connected bodies and preserve survivor IDs", "[sim][
     grav::step(sim);
     REQUIRE(p.id(1) == 3);
 }
+
+TEST_CASE("Barnes-Hut agrees with direct gravity at tight opening angles", "[sim][barnes_hut]") {
+    grav::Simulation exact;
+    grav::scenarios::random_cluster(exact.particles, 512, 35);
+    exact.params.dt = 0.0F;
+    grav::step(exact);
+
+    grav::Simulation tree;
+    tree.backend = grav::Backend::Cuda;
+    tree.particles = exact.particles;
+    tree.params = exact.params;
+    tree.params.force_model = grav::ForceModel::BarnesHut;
+    REQUIRE(grav::active_backend(tree) == grav::Backend::Cpu);
+
+    for (const float theta : {0.0F, 0.6F}) {
+        tree.params.barnes_hut_theta = theta;
+        grav::step(tree);
+        double error_sq = 0.0;
+        double exact_sq = 0.0;
+        for (std::size_t i = 0; i < tree.particles.count(); ++i) {
+            const auto a = exact.particles.accelerations[i];
+            error_sq += grav::length_squared(tree.particles.accelerations[i] - a);
+            exact_sq += grav::length_squared(a);
+        }
+        REQUIRE(std::sqrt(error_sq / exact_sq) < (theta == 0.0F ? 1e-5 : 0.03));
+    }
+}
+
+TEST_CASE("Barnes-Hut handles coincident bodies without self-force", "[sim][barnes_hut]") {
+    grav::Simulation sim;
+    sim.params.force_model = grav::ForceModel::BarnesHut;
+    sim.params.softening = 0.0F;
+    sim.particles.resize(100);
+    grav::step(sim);
+    for (const auto a : sim.particles.accelerations) {
+        REQUIRE(grav::length_squared(a) == 0.0F);
+    }
+}

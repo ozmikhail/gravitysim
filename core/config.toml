@@ -16,3 +16,7 @@ barnes_hut_theta = 0.6
 [trails]
 enabled = true
 max_history = 64
+
+[export]
+positions = ""
+frames = ""

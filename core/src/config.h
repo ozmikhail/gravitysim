@@ -26,10 +26,16 @@ struct TrailsConfig {
     std::size_t max_history = 64;
 };
 
+struct ExportConfig {
+    std::filesystem::path positions;
+    std::filesystem::path frames;
+};
+
 struct Config {
     WindowConfig window;
     SimulationConfig simulation;
     TrailsConfig trails;
+    ExportConfig output;
 
     static Config load(const std::filesystem::path& path);
 };

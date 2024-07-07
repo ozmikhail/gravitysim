@@ -58,6 +58,16 @@ const char* version() {
     return reinterpret_cast<const char*>(glGetString(GL_VERSION));
 }
 
+void read_rgb(int width, int height, std::vector<unsigned char>& rgb) {
+    rgb.resize(static_cast<std::size_t>(width) * height * 3);
+    GLint alignment = 0;
+    glGetIntegerv(GL_PACK_ALIGNMENT, &alignment);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
+    glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+    check("read framebuffer");
+}
+
 void set_viewport(int width, int height) { glViewport(0, 0, width, height); }
 
 void clear(float r, float g, float b, float a) {

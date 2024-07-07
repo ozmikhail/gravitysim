@@ -146,6 +146,9 @@ Config Config::load(const std::filesystem::path& path) {
         )
     );
 
+    cfg.output.positions = section_value<std::string>(tbl, "export", "positions", "");
+    cfg.output.frames = section_value<std::string>(tbl, "export", "frames", "");
+
     validate(cfg);
     return cfg;
 }

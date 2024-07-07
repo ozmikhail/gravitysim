@@ -16,6 +16,9 @@ add_library(sim_lib STATIC
 target_include_directories(sim_lib PUBLIC src)
 target_link_libraries(sim_lib PUBLIC error_lib)
 
+add_library(export_lib STATIC src/modules/export/export_writer.cpp)
+target_link_libraries(export_lib PUBLIC sim_lib)
+
 add_library(scenarios_lib STATIC
     src/modules/scenarios/random_cluster.cpp
     src/modules/scenarios/solar_system.cpp
@@ -107,6 +110,7 @@ target_link_libraries(simulator PRIVATE
     imgui_layer
     ui_lib
     render_lib
+    export_lib
     sim_lib
     scenarios_lib
     openmp_adapter

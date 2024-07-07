@@ -4,12 +4,14 @@
 #include <format>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "config.h"
 #include "error.h"
 #include "lib/gl/gl.h"
 #include "lib/imgui_layer/imgui_layer.h"
 #include "lib/window/window.h"
+#include "modules/export/export_writer.h"
 #include "modules/metrics/metrics.h"
 #include "modules/render/render.h"
 #include "modules/sim/sim.h"
@@ -95,15 +97,24 @@ int run(const Config& cfg) {
         renderer.record_trails(simulation.particles);
     }
 
+    grav::ExportWriter output(cfg.output.positions, cfg.output.frames);
+    grav::FrameSample sample;
+    std::vector<unsigned char> pixels;
+    bool first_frame = true;
     while (!window.should_close()) {
         window.poll_events();
 
         const bool reset = controls.reset_clicked || controls.scenario_changed;
-        const bool advance = !reset && (!controls.paused || controls.step_once_clicked);
+        const bool advance = !first_frame && !reset && (!controls.paused || controls.step_once_clicked);
         if (reset) {
             grav::reset(simulation, controls.current_scenario, cfg.simulation.default_particle_count);
+            ++sample.run;
+            sample.step = 0;
+            sample.time = 0.0;
         } else if (advance) {
             grav::step(simulation);
+            ++sample.step;
+            sample.time += simulation.params.dt;
         }
 
         if (reset || (advance && !simulation.positions_on_device)) {
@@ -128,6 +139,18 @@ int run(const Config& cfg) {
         grav::gl::clear(0.05F, 0.05F, 0.08F, 1.0F);
         renderer.draw(fb_w, fb_h, simulation.particles.count());
 
+        if (first_frame || reset || advance) {
+            if (output.writes_positions()) {
+                grav::sync_positions(simulation);
+                output.write_positions(sample, simulation.particles);
+            }
+            if (output.writes_frames() && fb_w > 0 && fb_h > 0) {
+                grav::gl::read_rgb(fb_w, fb_h, pixels);
+                output.write_frame(sample, fb_w, fb_h, pixels);
+            }
+            ++sample.frame;
+        }
+        first_frame = false;
         grav::imgui::end_frame();
         window.swap_buffers();
     }

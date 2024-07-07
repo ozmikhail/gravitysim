@@ -90,9 +90,26 @@ The three CUDA force kernels are separate `.cu` files under `core/src/lib/cuda/k
 
 Speedup numbers from your hardware go in `docs/kernels.md` (run `nsys profile ./build/simulator` to populate).
 
+## Export
+
+Set either path under `[export]` in `core/config.toml` to enable capture:
+
+```toml
+[export]
+positions = "capture/positions.jsonl"
+frames = "capture/frames"
+```
+
+Paths are relative to the working directory. Use a new stream file and a new
+frame directory for each run. The simulator captures the initial state, each
+completed step, and each reset. Paused redraws add no samples. Each JSON line
+contains `frame`, `run`, `step`, `time`, and `positions` as `[id, x, y, z]`
+rows. The run counter increments on reset and IDs are stable within a run. The
+matching `frame-NNNNNN.ppm` contains the scene before the controls and metrics
+overlay. A minimized window may skip an image while the position stream continues.
+
 ## Deferred (future work)
 
-- Frame / position-stream export
 - SPH fluid and electrostatic-charge variants
 
 ## License

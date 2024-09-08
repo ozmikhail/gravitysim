@@ -4,6 +4,7 @@
 
 #include "lib/openmp/barnes_hut.h"
 #include "lib/openmp/gravity_force.h"
+#include "lib/openmp/sph.h"
 #include "modules/sim/params.h"
 #include "modules/sim/particles.h"
 
@@ -30,10 +31,16 @@ void compute_direct_gravity(Particles& p, float gravity, float softening_sq) {
 }
 
 void compute_accelerations(Particles& p, const SimParams& params, float eps2) {
-    if (params.force_model == ForceModel::BarnesHut) {
-        compute_barnes_hut(p, params.gravity, eps2, params.barnes_hut_theta);
-    } else {
+    switch (params.force_model) {
+    case ForceModel::Direct:
         compute_direct_gravity(p, params.gravity, eps2);
+        break;
+    case ForceModel::BarnesHut:
+        compute_barnes_hut(p, params.gravity, eps2, params.barnes_hut_theta);
+        break;
+    case ForceModel::Sph:
+        compute_sph(p, params);
+        break;
     }
 }
 
@@ -61,13 +68,15 @@ void cpu_step(Particles& p, const SimParams& params) {
             p.velocities[i] += p.accelerations[i] * dt;
             p.positions[i] += p.velocities[i] * half_dt;
         }
-        return;
+    } else {
+        compute_accelerations(p, params, eps2);
+        for (std::size_t i = 0; i < n; ++i) {
+            p.velocities[i] += p.accelerations[i] * dt;
+            p.positions[i] += p.velocities[i] * dt;
+        }
     }
-
-    compute_accelerations(p, params, eps2);
-    for (std::size_t i = 0; i < n; ++i) {
-        p.velocities[i] += p.accelerations[i] * dt;
-        p.positions[i] += p.velocities[i] * dt;
+    if (params.force_model == ForceModel::Sph) {
+        confine_fluid(p);
     }
 }
 

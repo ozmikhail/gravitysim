@@ -19,7 +19,7 @@ struct ControlsState {
     std::string current_scenario = "random_cluster";
 };
 
-void draw_metrics_overlay(const FrameMetrics& metrics);
+void draw_metrics_overlay(const FrameMetrics& metrics, bool show_pairs);
 
 void draw_controls(ControlsState& state, Simulation& sim);
 

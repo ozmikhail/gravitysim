@@ -76,10 +76,14 @@ int run(const Config& cfg) {
     simulation.params.kernel_variant = parse_kernel(cfg.simulation.default_kernel);
     if (cfg.simulation.default_force == "barnes_hut") {
         simulation.params.force_model = grav::ForceModel::BarnesHut;
+    } else if (cfg.simulation.default_force == "sph") {
+        simulation.params.force_model = grav::ForceModel::Sph;
     }
     simulation.params.barnes_hut_theta = cfg.simulation.barnes_hut_theta;
 
-    grav::reset(simulation, "colliding_galaxies", cfg.simulation.default_particle_count);
+    const char* scenario = simulation.params.force_model == grav::ForceModel::Sph
+                             ? "fluid_block" : "colliding_galaxies";
+    grav::reset(simulation, scenario, cfg.simulation.default_particle_count);
 
     renderer.upload_positions(simulation.particles);
     if (simulation.backend == grav::Backend::Cuda) {
@@ -88,7 +92,7 @@ int run(const Config& cfg) {
 
     grav::MetricsTracker metrics;
     grav::ui::ControlsState controls{};
-    controls.current_scenario = "colliding_galaxies";
+    controls.current_scenario = scenario;
     controls.trails_enabled = cfg.trails.enabled;
     controls.trail_history = cfg.trails.max_history;
     controls.max_particles = cfg.simulation.max_particles;
@@ -131,7 +135,9 @@ int run(const Config& cfg) {
 
         grav::imgui::begin_frame();
         metrics.record_frame(simulation.particles.count());
-        grav::ui::draw_metrics_overlay(metrics.snapshot());
+        grav::ui::draw_metrics_overlay(
+            metrics.snapshot(), advance && simulation.params.force_model == grav::ForceModel::Direct
+        );
         grav::ui::draw_controls(controls, simulation);
 
         const auto [fb_w, fb_h] = window.framebuffer_size();

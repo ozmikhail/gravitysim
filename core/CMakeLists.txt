@@ -23,6 +23,7 @@ add_library(scenarios_lib STATIC
     src/modules/scenarios/random_cluster.cpp
     src/modules/scenarios/solar_system.cpp
     src/modules/scenarios/colliding_galaxies.cpp
+    src/modules/scenarios/fluid_block.cpp
 )
 target_include_directories(scenarios_lib PUBLIC src)
 target_link_libraries(scenarios_lib PUBLIC sim_lib)
@@ -30,6 +31,7 @@ target_link_libraries(scenarios_lib PUBLIC sim_lib)
 add_library(openmp_adapter STATIC
     src/lib/openmp/barnes_hut.cpp
     src/lib/openmp/nbody_cpu.cpp
+    src/lib/openmp/sph.cpp
 )
 target_include_directories(openmp_adapter PUBLIC src)
 target_link_libraries(openmp_adapter PUBLIC sim_lib)

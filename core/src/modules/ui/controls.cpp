@@ -25,6 +25,8 @@ const char* force_label(ForceModel model) {
         return "direct gravity";
     case ForceModel::BarnesHut:
         return "Barnes-Hut gravity";
+    case ForceModel::Sph:
+        return "SPH fluid";
     }
     return "unknown";
 }
@@ -67,11 +69,19 @@ void draw_controls(ControlsState& state, Simulation& sim) {
             ImGui::Checkbox("trails", &state.trails_enabled);
         }
         ImGui::SliderFloat("dt", &params.dt, 0.0001F, 0.05F, "%.4f");
-        ImGui::SliderFloat("G", &params.gravity, 0.0F, 5.0F, "%.3f");
-        ImGui::SliderFloat("softening", &params.softening, 0.001F, 0.5F, "%.3f");
-        ImGui::Checkbox("merge on collision", &params.merge_on_collision);
-        if (params.merge_on_collision) {
-            ImGui::SliderFloat("merge distance", &params.merge_radius, 0.0001F, 0.1F, "%.4f");
+        if (params.force_model == ForceModel::Sph) {
+            ImGui::SliderFloat("downward gravity", &params.gravity, 0.0F, 5.0F, "%.3f");
+            ImGui::SliderFloat("smoothing radius", &params.sph_radius, 0.02F, 0.5F, "%.3f");
+            ImGui::SliderFloat("rest density", &params.sph_rest_density, 0.1F, 5.0F, "%.2f");
+            ImGui::SliderFloat("stiffness", &params.sph_stiffness, 0.0F, 25.0F, "%.2f");
+            ImGui::SliderFloat("viscosity", &params.sph_viscosity, 0.0F, 0.1F, "%.3f");
+        } else {
+            ImGui::SliderFloat("G", &params.gravity, 0.0F, 5.0F, "%.3f");
+            ImGui::SliderFloat("softening", &params.softening, 0.001F, 0.5F, "%.3f");
+            ImGui::Checkbox("merge on collision", &params.merge_on_collision);
+            if (params.merge_on_collision) {
+                ImGui::SliderFloat("merge distance", &params.merge_radius, 0.0001F, 0.1F, "%.4f");
+            }
         }
 
         ImGui::Separator();
@@ -89,7 +99,7 @@ void draw_controls(ControlsState& state, Simulation& sim) {
         }
 
         if (ImGui::BeginCombo("force model", force_label(params.force_model))) {
-            for (auto candidate : {ForceModel::Direct, ForceModel::BarnesHut}) {
+            for (auto candidate : {ForceModel::Direct, ForceModel::BarnesHut, ForceModel::Sph}) {
                 const bool selected = params.force_model == candidate;
                 if (ImGui::Selectable(force_label(candidate), selected)) {
                     params.force_model = candidate;
@@ -131,6 +141,11 @@ void draw_controls(ControlsState& state, Simulation& sim) {
                     if (state.current_scenario != candidate) {
                         state.current_scenario = candidate;
                         state.scenario_changed = true;
+                        if (candidate == "fluid_block") {
+                            params.force_model = ForceModel::Sph;
+                        } else if (params.force_model == ForceModel::Sph) {
+                            params.force_model = ForceModel::Direct;
+                        }
                     }
                 }
                 if (selected) {

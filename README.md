@@ -108,9 +108,17 @@ rows. The run counter increments on reset and IDs are stable within a run. The
 matching `frame-NNNNNN.ppm` contains the scene before the controls and metrics
 overlay. A minimized window may skip an image while the position stream continues.
 
+## SPH fluid
+
+Choose **fluid_block** or set `simulation.default_force = "sph"` for a block of
+fluid in a reflecting box. The CPU/OpenMP solver uses a uniform grid to find
+neighbors within the smoothing radius. The controls expose downward gravity,
+smoothing radius, rest density, pressure stiffness, and viscosity. Collision
+merging is disabled while SPH is selected.
+
 ## Deferred (future work)
 
-- SPH fluid and electrostatic-charge variants
+- Electrostatic-charge variant
 
 ## License
 

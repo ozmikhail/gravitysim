@@ -106,3 +106,39 @@ TEST_CASE("Barnes-Hut handles coincident bodies without self-force", "[sim][barn
         REQUIRE(grav::length_squared(a) == 0.0F);
     }
 }
+
+TEST_CASE("SPH pressure and viscosity act only within the smoothing radius", "[sim][sph]") {
+    grav::Simulation sim;
+    sim.backend = grav::Backend::Cuda;
+    sim.params.force_model = grav::ForceModel::Sph;
+    sim.params.gravity = 0.0F;
+    sim.params.dt = 0.0F;
+    auto& p = sim.particles;
+    p.resize(3);
+    p.positions = {{-0.03F, 0.0F, 0.0F}, {0.03F, 0.0F, 0.0F}, {0.6F, 0.0F, 0.0F}};
+    p.masses = {0.02F, 0.02F, 0.02F};
+
+    grav::step(sim);
+    REQUIRE(p.accelerations[0].x < 0.0F);
+    REQUIRE(p.accelerations[1].x == -p.accelerations[0].x);
+    REQUIRE(grav::length_squared(p.accelerations[2]) == 0.0F);
+
+    sim.params.sph_stiffness = 0.0F;
+    p.velocities = {{1.0F, 0.0F, 0.0F}, {-1.0F, 0.0F, 0.0F}, {}};
+    grav::step(sim);
+    REQUIRE(p.accelerations[0].x < 0.0F);
+    REQUIRE(p.accelerations[1].x == -p.accelerations[0].x);
+}
+
+TEST_CASE("SPH reflects a particle at the container boundary", "[sim][sph]") {
+    grav::Simulation sim;
+    sim.params.force_model = grav::ForceModel::Sph;
+    sim.params.dt = 0.01F;
+    sim.params.gravity = 0.0F;
+    sim.particles.resize(1);
+    sim.particles.positions[0].x = 0.94F;
+    sim.particles.velocities[0].x = 2.0F;
+    grav::step(sim);
+    REQUIRE(sim.particles.positions[0].x == 0.95F);
+    REQUIRE(sim.particles.velocities[0].x < 0.0F);
+}

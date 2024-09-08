@@ -26,7 +26,7 @@ void step(Simulation& sim) {
         sync_positions(sim);
         sim.positions_on_device = false;
         cpu_step(sim.particles, sim.params);
-        if (sim.params.merge_on_collision) {
+        if (sim.params.merge_on_collision && sim.params.force_model != ForceModel::Sph) {
             merge_collisions(sim.particles, sim.params.merge_radius);
         }
         return;
@@ -43,6 +43,8 @@ void reset(Simulation& sim, std::string_view scenario_name, std::size_t count) {
         scenarios::solar_system(sim.particles);
     } else if (scenario_name == "colliding_galaxies") {
         scenarios::colliding_galaxies(sim.particles, count / 2);
+    } else if (scenario_name == "fluid_block") {
+        scenarios::fluid_block(sim.particles, count);
     } else {
         throw AppError::not_found(std::string("scenario: ") + std::string(scenario_name));
     }

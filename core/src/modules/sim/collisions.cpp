@@ -23,6 +23,7 @@ int root_of(std::vector<int>& parents, int index) {
 void merge_collision_groups(Particles& p, std::vector<int>& parents) {
     const auto n = p.count();
     p.accelerations.resize(n);
+    p.charges.resize(n, 0.0F);
     if (p.ids.size() != n) {
         p.ids.resize(n);
         std::iota(p.ids.begin(), p.ids.end(), std::size_t{0});
@@ -42,6 +43,7 @@ void merge_collision_groups(Particles& p, std::vector<int>& parents) {
             p.velocities[root] += (p.velocities[i] - p.velocities[root]) * fraction;
         }
         p.masses[root] = mass;
+        p.charges[root] += p.charges[i];
         p.accelerations[root] = {};
     }
 
@@ -54,6 +56,7 @@ void merge_collision_groups(Particles& p, std::vector<int>& parents) {
         p.velocities[out] = p.velocities[i];
         p.accelerations[out] = p.accelerations[i];
         p.masses[out] = p.masses[i];
+        p.charges[out] = p.charges[i];
         p.ids[out] = p.ids[i];
         ++out;
     }
@@ -61,6 +64,7 @@ void merge_collision_groups(Particles& p, std::vector<int>& parents) {
     p.velocities.resize(out);
     p.accelerations.resize(out);
     p.masses.resize(out);
+    p.charges.resize(out);
     p.ids.resize(out);
 }
 

@@ -23,7 +23,7 @@ public:
     ParticleRenderer& operator=(ParticleRenderer&&) = delete;
 
     void upload_positions(const Particles& particles);
-    void upload_speeds(const Particles& particles);
+    void upload_appearance(const Particles& particles, bool charge_colors);
     void clear_trails() noexcept { trails_.clear(); }
     void record_trails(const Particles& particles) { trails_.record(position_vbo_, particles); }
 
@@ -36,9 +36,10 @@ private:
     std::uint32_t program_ = 0;
     std::uint32_t vao_ = 0;
     std::uint32_t position_vbo_ = 0;
-    std::uint32_t speed_vbo_ = 0;
+    std::uint32_t appearance_vbo_ = 0;
     std::size_t capacity_ = 0;
-    std::vector<float> speed_buffer_;
+    std::vector<float> appearance_buffer_;
+    bool charge_colors_ = false;
     TrailRenderer trails_;
 };
 

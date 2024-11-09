@@ -45,6 +45,8 @@ void reset(Simulation& sim, std::string_view scenario_name, std::size_t count) {
         scenarios::colliding_galaxies(sim.particles, count / 2);
     } else if (scenario_name == "fluid_block") {
         scenarios::fluid_block(sim.particles, count);
+    } else if (scenario_name == "charge_cloud") {
+        scenarios::charge_cloud(sim.particles, count);
     } else {
         throw AppError::not_found(std::string("scenario: ") + std::string(scenario_name));
     }

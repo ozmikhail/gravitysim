@@ -7,7 +7,7 @@
 namespace grav {
 
 enum class KernelVariant : std::uint8_t { Global, Tiled, Float4 };
-enum class ForceModel : std::uint8_t { Direct, BarnesHut, Sph };
+enum class ForceModel : std::uint8_t { Direct, BarnesHut, Sph, Electrostatic };
 enum class Backend : std::uint8_t { Cpu, Cuda };
 
 struct SimParams {
@@ -22,6 +22,7 @@ struct SimParams {
     float sph_rest_density = 1.0F;
     float sph_stiffness = 8.0F;
     float sph_viscosity = 0.01F;
+    float coulomb_strength = 1.0F;
     bool merge_on_collision = false;
     float merge_radius = 0.01F;
 };

@@ -65,8 +65,10 @@ void validate(const Config& cfg) {
             "config: default_backend must be auto, cpu, or cuda"
         );
     }
-    if (!one_of(cfg.simulation.default_force, {"direct", "barnes_hut", "sph"})) {
-        throw AppError::invalid_input("config: default_force must be direct, barnes_hut, or sph");
+    if (!one_of(cfg.simulation.default_force, {"direct", "barnes_hut", "sph", "electrostatic"})) {
+        throw AppError::invalid_input(
+            "config: default_force must be direct, barnes_hut, sph, or electrostatic"
+        );
     }
     const float theta = cfg.simulation.barnes_hut_theta;
     if (!std::isfinite(theta) || theta < 0.0F || theta > 1.5F) {

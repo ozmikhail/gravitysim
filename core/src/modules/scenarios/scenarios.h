@@ -19,11 +19,14 @@ void colliding_galaxies(Particles& out, std::size_t per_galaxy, std::uint64_t se
 
 void fluid_block(Particles& out, std::size_t n);
 
-inline constexpr std::array<std::string_view, 4> available = {
+void charge_cloud(Particles& out, std::size_t n);
+
+inline constexpr std::array<std::string_view, 5> available = {
     "random_cluster",
     "solar_system",
     "colliding_galaxies",
     "fluid_block",
+    "charge_cloud",
 };
 
 }

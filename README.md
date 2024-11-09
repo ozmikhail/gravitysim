@@ -17,7 +17,7 @@ A from-scratch all-pairs N-body simulator for studying CUDA optimization techniq
 - OpenMP-parallel CPU backend for development without CUDA hardware
 - Dear ImGui controls: pause / step / reset, dt / G / softening sliders, integrator / kernel / scenario pickers
 - Optional collision merging on CPU and CUDA with mass and momentum conservation
-- Built-in scenarios: random cluster, solar system, colliding galaxies
+- Built-in scenarios: random cluster, solar system, colliding galaxies, fluid block, charge cloud
 - Speed-coloured point sprites and optional per-particle trails with alpha blending
 - Live FPS and particle-pairs/sec overlay
 - Catch2 unit tests covering integrators, scenarios, and metrics — no GL/CUDA dependency
@@ -116,9 +116,14 @@ neighbors within the smoothing radius. The controls expose downward gravity,
 smoothing radius, rest density, pressure stiffness, and viscosity. Collision
 merging is disabled while SPH is selected.
 
-## Deferred (future work)
+## Electrostatic charge
 
-- Electrostatic-charge variant
+Choose **charge_cloud** or set `simulation.default_force = "electrostatic"` for a
+mix of positive (orange) and negative (blue) particles. The CPU/OpenMP solver
+uses softened Coulomb forces, with like charges repelling and unlike charges
+attracting. Use the **Coulomb strength** and **softening** controls to tune the
+interaction. Uncharged particles appear gray, and collision merging conserves
+the net charge of each merged group.
 
 ## License
 

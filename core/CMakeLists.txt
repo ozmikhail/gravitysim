@@ -24,6 +24,7 @@ add_library(scenarios_lib STATIC
     src/modules/scenarios/solar_system.cpp
     src/modules/scenarios/colliding_galaxies.cpp
     src/modules/scenarios/fluid_block.cpp
+    src/modules/scenarios/charge_cloud.cpp
 )
 target_include_directories(scenarios_lib PUBLIC src)
 target_link_libraries(scenarios_lib PUBLIC sim_lib)

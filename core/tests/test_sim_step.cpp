@@ -142,3 +142,29 @@ TEST_CASE("SPH reflects a particle at the container boundary", "[sim][sph]") {
     REQUIRE(sim.particles.positions[0].x == 0.95F);
     REQUIRE(sim.particles.velocities[0].x < 0.0F);
 }
+
+TEST_CASE("Coulomb forces respect charge sign and conserve pair momentum", "[sim][charge]") {
+    grav::Simulation sim;
+    sim.params.force_model = grav::ForceModel::Electrostatic;
+    sim.params.dt = 0.0F;
+    auto& p = sim.particles;
+    p.resize(3);
+    p.positions = {{-0.1F, 0.0F, 0.0F}, {0.1F, 0.0F, 0.0F}, {0.0F, 0.1F, 0.0F}};
+    p.masses = {1.0F, 2.0F, 1.0F};
+    p.charges = {1.0F, 1.0F, 0.0F};
+    grav::step(sim);
+    const auto repulsion = p.accelerations[0].x;
+    REQUIRE(repulsion < 0.0F);
+    REQUIRE(p.accelerations[1].x * p.masses[1] == -repulsion);
+    REQUIRE(grav::length_squared(p.accelerations[2]) == 0.0F);
+
+    p.charges[1] = -1.0F;
+    grav::step(sim);
+    REQUIRE(p.accelerations[0].x == -repulsion);
+
+    sim.params.merge_on_collision = true;
+    sim.params.merge_radius = 0.21F;
+    grav::step(sim);
+    REQUIRE(p.count() == 1);
+    REQUIRE(p.charge(0) == 0.0F);
+}

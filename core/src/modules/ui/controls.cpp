@@ -27,6 +27,8 @@ const char* force_label(ForceModel model) {
         return "Barnes-Hut gravity";
     case ForceModel::Sph:
         return "SPH fluid";
+    case ForceModel::Electrostatic:
+        return "electrostatic";
     }
     return "unknown";
 }
@@ -76,7 +78,11 @@ void draw_controls(ControlsState& state, Simulation& sim) {
             ImGui::SliderFloat("stiffness", &params.sph_stiffness, 0.0F, 25.0F, "%.2f");
             ImGui::SliderFloat("viscosity", &params.sph_viscosity, 0.0F, 0.1F, "%.3f");
         } else {
-            ImGui::SliderFloat("G", &params.gravity, 0.0F, 5.0F, "%.3f");
+            if (params.force_model == ForceModel::Electrostatic) {
+                ImGui::SliderFloat("Coulomb strength", &params.coulomb_strength, 0.0F, 5.0F, "%.3f");
+            } else {
+                ImGui::SliderFloat("G", &params.gravity, 0.0F, 5.0F, "%.3f");
+            }
             ImGui::SliderFloat("softening", &params.softening, 0.001F, 0.5F, "%.3f");
             ImGui::Checkbox("merge on collision", &params.merge_on_collision);
             if (params.merge_on_collision) {
@@ -99,7 +105,10 @@ void draw_controls(ControlsState& state, Simulation& sim) {
         }
 
         if (ImGui::BeginCombo("force model", force_label(params.force_model))) {
-            for (auto candidate : {ForceModel::Direct, ForceModel::BarnesHut, ForceModel::Sph}) {
+            for (auto candidate : {
+                     ForceModel::Direct, ForceModel::BarnesHut, ForceModel::Sph,
+                     ForceModel::Electrostatic,
+                 }) {
                 const bool selected = params.force_model == candidate;
                 if (ImGui::Selectable(force_label(candidate), selected)) {
                     params.force_model = candidate;
@@ -143,7 +152,10 @@ void draw_controls(ControlsState& state, Simulation& sim) {
                         state.scenario_changed = true;
                         if (candidate == "fluid_block") {
                             params.force_model = ForceModel::Sph;
-                        } else if (params.force_model == ForceModel::Sph) {
+                        } else if (candidate == "charge_cloud") {
+                            params.force_model = ForceModel::Electrostatic;
+                        } else if (params.force_model == ForceModel::Sph ||
+                                   params.force_model == ForceModel::Electrostatic) {
                             params.force_model = ForceModel::Direct;
                         }
                     }

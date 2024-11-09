@@ -74,15 +74,17 @@ int run(const Config& cfg) {
     simulation.backend = resolve_backend(cfg.simulation.default_backend);
     simulation.params.integrator = parse_integrator(cfg.simulation.default_integrator);
     simulation.params.kernel_variant = parse_kernel(cfg.simulation.default_kernel);
+    const char* scenario = "colliding_galaxies";
     if (cfg.simulation.default_force == "barnes_hut") {
         simulation.params.force_model = grav::ForceModel::BarnesHut;
     } else if (cfg.simulation.default_force == "sph") {
         simulation.params.force_model = grav::ForceModel::Sph;
+        scenario = "fluid_block";
+    } else if (cfg.simulation.default_force == "electrostatic") {
+        simulation.params.force_model = grav::ForceModel::Electrostatic;
+        scenario = "charge_cloud";
     }
     simulation.params.barnes_hut_theta = cfg.simulation.barnes_hut_theta;
-
-    const char* scenario = simulation.params.force_model == grav::ForceModel::Sph
-                             ? "fluid_block" : "colliding_galaxies";
     grav::reset(simulation, scenario, cfg.simulation.default_particle_count);
 
     renderer.upload_positions(simulation.particles);
@@ -131,7 +133,9 @@ int run(const Config& cfg) {
             renderer.record_trails(simulation.particles);
         }
         trails_were_enabled = controls.trails_enabled;
-        renderer.upload_speeds(simulation.particles);
+        renderer.upload_appearance(
+            simulation.particles, simulation.params.force_model == grav::ForceModel::Electrostatic
+        );
 
         grav::imgui::begin_frame();
         metrics.record_frame(simulation.particles.count());

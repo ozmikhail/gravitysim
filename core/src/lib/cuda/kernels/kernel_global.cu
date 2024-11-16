@@ -34,6 +34,9 @@ __global__ void compute_forces_global_kernel(
         const float dy = positions[(3 * j) + 1] - yi;
         const float dz = positions[(3 * j) + 2] - zi;
         const float r2 = (dx * dx) + (dy * dy) + (dz * dz) + softening_sq;
+        if (r2 == 0.0F) {
+            continue;
+        }
         const float inv_r3 = rsqrtf(r2 * r2 * r2);
         const float k = gravity * masses[j] * inv_r3;
         ax += dx * k;

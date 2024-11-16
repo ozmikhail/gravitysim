@@ -59,6 +59,9 @@ __global__ void compute_forces_float4_kernel(
                 const float dz = pj.z - pi.z;
                 const float r2 =
                     fmaf(dx, dx, fmaf(dy, dy, fmaf(dz, dz, softening_sq)));
+                if (r2 == 0.0F) {
+                    continue;
+                }
                 const float inv_r3 = rsqrtf(r2 * r2 * r2);
                 const float kv = gravity * pj.w * inv_r3;
                 ax = fmaf(dx, kv, ax);

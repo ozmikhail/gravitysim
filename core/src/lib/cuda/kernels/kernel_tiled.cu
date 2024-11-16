@@ -60,6 +60,9 @@ __global__ void compute_forces_tiled_kernel(
                 const float dy = sh_pos_y[k] - yi;
                 const float dz = sh_pos_z[k] - zi;
                 const float r2 = (dx * dx) + (dy * dy) + (dz * dz) + softening_sq;
+                if (r2 == 0.0F) {
+                    continue;
+                }
                 const float inv_r3 = rsqrtf(r2 * r2 * r2);
                 const float kv = gravity * sh_mass[k] * inv_r3;
                 ax += dx * kv;

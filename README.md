@@ -18,16 +18,17 @@ A from-scratch all-pairs N-body simulator for studying CUDA optimization techniq
 - Dear ImGui controls: pause / step / reset, dt / G / softening sliders, integrator / kernel / scenario pickers
 - Optional collision merging on CPU and CUDA with mass and momentum conservation
 - Built-in scenarios: random cluster, solar system, colliding galaxies, fluid block, charge cloud
-- Speed-coloured point sprites and optional per-particle trails with alpha blending
+- Speed-coloured point sprites (charge-coloured in the electrostatic scenario) and optional per-particle trails with alpha blending
 - Live FPS and particle-pairs/sec overlay
-- Catch2 unit tests covering integrators, scenarios, and metrics — no GL/CUDA dependency
+- Optional frame and position-stream export (see [Export](#export))
+- Catch2 unit tests covering integrators, simulation steps, scenarios, and metrics — no GL/CUDA dependency
 
 ## Quick start
 
 ### Linux + NVIDIA (full path with CUDA)
 
 ```bash
-git clone https://github.com/<user>/gravitysim.git
+git clone https://github.com/ozmikhail/gravitysim.git
 cd gravitysim
 make build              # configure and compile, BUILD_CUDA defaults ON on Linux
 ./build/simulator core/config.toml
@@ -39,7 +40,7 @@ CUDA does not run on modern macOS. The build automatically disables CUDA on Appl
 
 ```bash
 brew install libomp
-git clone https://github.com/<user>/gravitysim.git
+git clone https://github.com/ozmikhail/gravitysim.git
 cd gravitysim
 make build
 ./build/simulator core/config.toml
@@ -48,17 +49,21 @@ make build
 ## Development
 
 ```bash
+make sync               # configure build/ (Release)
+make build              # configure and compile
+make run                # build, then start the simulator with core/config.toml
+make test               # build, then run Catch2 tests via ctest
+make format             # clang-format over core/
+make lint               # clang-tidy over core/src
 make check              # format + lint + typecheck + test
-make test               # Catch2 unit tests (no GL/CUDA needed)
-make build              # release build
 make clean              # wipe build/
 ```
 
-The test executable links only `sim_lib + scenarios_lib + metrics_lib + openmp_adapter` — never GL, GLFW, ImGui, or CUDA. This is enforced by the build, ensuring the lib/modules separation holds.
+The test executable links `sim_lib`, `scenarios_lib`, `metrics_lib`, `openmp_adapter`, `cuda_stub_adapter`, and Catch2. It does not link GL, GLFW, or ImGui, so the tests need no GPU or display.
 
 ## Configuration
 
-Startup-time knobs live in `core/config.toml` (window size, default particle count, integrator, kernel variant, max history). Runtime knobs (dt, G, paused, scenario selection) live in the ImGui panel.
+Startup-time knobs live in `core/config.toml`: window size and vsync, default and maximum particle counts, default integrator, backend, kernel variant, force model, `barnes_hut_theta`, trail settings, and export paths. Runtime knobs (dt, G, pause, scenario, force model, kernel) live in the ImGui panel.
 
 The `[trails]` section sets whether trails start enabled and the number of simulation
 samples retained per particle. The controls panel can toggle trails. History resets
@@ -66,8 +71,7 @@ with the scenario, advances with the simulation, and is disabled below two sampl
 
 Enable **merge on collision** to combine overlapping bodies after each step. The
 merge distance is a center-to-center threshold. Each connected group combines into
-its lowest-ID particle, keeping that particle's trail and conserving total mass
-and linear momentum. Detection samples the end of the step, so reduce `dt` for
+its lowest-index particle, conserving total mass, linear momentum, and charge. Detection samples the end of the step, so reduce `dt` for
 fast-moving bodies that can pass through each other between samples.
 
 Set `simulation.default_force = "barnes_hut"` or use the **force model** picker
@@ -88,7 +92,7 @@ The three CUDA force kernels are separate `.cu` files under `core/src/lib/cuda/k
 | `tiled` | `kernel_tiled.cu` | Shared-memory tile of 256 bodies; `#pragma unroll 8` |
 | `float4` | `kernel_float4.cu` | Packed `float4` (pos + mass) reads, `__restrict__`, FMA |
 
-Speedup numbers from your hardware go in `docs/kernels.md` (run `nsys profile ./build/simulator` to populate).
+Measure speedups on your hardware with `nsys profile ./build/simulator`. The repository does not include recorded results.
 
 ## Export
 
@@ -100,7 +104,7 @@ positions = "capture/positions.jsonl"
 frames = "capture/frames"
 ```
 
-Paths are relative to the working directory. Use a new stream file and a new
+Leave a path empty to disable that stream. Paths are relative to the working directory. Use a new stream file and a new
 frame directory for each run. The simulator captures the initial state, each
 completed step, and each reset. Paused redraws add no samples. Each JSON line
 contains `frame`, `run`, `step`, `time`, and `positions` as `[id, x, y, z]`

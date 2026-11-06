@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // projects import these through the package exports
+  "entry": ["plumb.config.ts", "src/**/*.test.ts"],
+  "project": ["src/**/*.{ts,mjs}"],
+  // the cli resolves prettier's executable at run time, which knip cannot follow
+  "ignoreDependencies": ["prettier"],
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@ozlabs/plumb",
+  "description": "Portable, deterministic repository contracts for agentic coding",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "bin": {
+    "plumb": "./bin/plumb.mjs"
+  },
+  "exports": {
+    ".": "./src/engine.mjs",
+    "./config": "./src/config.mjs",
+    "./conventions": "./src/conventions.mjs",
+    "./files": "./src/files.mjs",
+    "./glob": "./src/files.mjs",
+    "./comments": "./src/comments.mjs",
+    "./process": "./src/process.mjs",
+    "./adapters": "./src/adapters.mjs",
+    "./task": "./src/task.mjs",
+    "./workspace": "./src/workspace.mjs",
+    "./diagnostics": "./src/diagnostics.mjs",
+    "./schema": "./plumb.schema.json"
+  },
+  "workspaces": [
+    "packages/javascript"
+  ],
+  "scripts": {
+    "check": "node bin/plumb.mjs check",
+    "test": "node scripts/test.mjs",
+    "test:javascript": "node scripts/test.mjs javascript",
+    "test:python": "node scripts/test.mjs python",
+    "test:native": "node scripts/test.mjs native",
+    "schema": "node scripts/schema.mjs",
+    "build": "node scripts/build.mjs",
+    "test:unit": "node scripts/test.mjs unit"
+  }
+}

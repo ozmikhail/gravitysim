@@ -1,0 +1,1323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:plumb:policy:v1",
+  "title": "Plumb policy",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "preset": {
+      "enum": [
+        "ozlabs",
+        "portable"
+      ]
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "type": "string",
+            "minLength": 1,
+            "format": "path"
+          },
+          "profile": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "options": {
+            "type": "object"
+          },
+          "tsconfigs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "format": "path"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "knip": {
+            "type": "boolean"
+          },
+          "surface": {
+            "type": "object",
+            "properties": {
+              "snapshot": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path",
+                "pattern": "\\.surface\\.json$"
+              },
+              "tsconfig": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path"
+              },
+              "signatures": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "snapshot"
+            ],
+            "additionalProperties": false
+          },
+          "uniqueExports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "format": "path"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "compileCommands": {
+            "type": "string",
+            "minLength": 1,
+            "format": "path"
+          },
+          "prepare": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "root",
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "bundles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bindings": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "format": "path"
+            }
+          }
+        }
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "exclude": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "format": "glob"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "files",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "files": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "path"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "forbidden": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "glob"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "pattern": {
+                "type": "string",
+                "minLength": 1,
+                "format": "regex"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "files",
+              "pattern",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "maxLines": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "docs": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "string",
+          "minLength": 1,
+          "format": "path"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "generated": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "format": "path"
+          },
+          "content": {
+            "type": "string"
+          },
+          "executable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "format": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "format": "glob"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "path",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "contracts": {
+      "type": "object",
+      "properties": {
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "deny": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "from",
+              "deny",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "manifests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path"
+              },
+              "variable": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entry": {
+                "type": "string",
+                "minLength": 1
+              },
+              "exempt": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "format": "path"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "file",
+              "variable",
+              "entry"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "registrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sources": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path"
+              },
+              "call": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "path"
+                  }
+                },
+                "required": [
+                  "name",
+                  "from"
+                ],
+                "additionalProperties": false
+              },
+              "registrar": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "glob"
+                  },
+                  "suffix": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "files",
+                  "suffix"
+                ],
+                "additionalProperties": false
+              },
+              "composition": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "path"
+                  },
+                  "function": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "file",
+                  "function"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "sources",
+              "call",
+              "registrar",
+              "composition"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "lazyModules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "loader": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path"
+              },
+              "listing": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "path"
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "regex"
+                  },
+                  "root": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "path"
+                  }
+                },
+                "required": [
+                  "file",
+                  "pattern",
+                  "root"
+                ],
+                "additionalProperties": false
+              },
+              "names": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "glob"
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "regex"
+                  }
+                },
+                "required": [
+                  "files",
+                  "pattern"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "loader",
+              "names"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "writtenOnce": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path"
+              },
+              "values": {
+                "type": "string",
+                "minLength": 1,
+                "format": "regex"
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "ignore": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "table",
+              "values",
+              "files"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "importGraphs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "within": {
+                "type": "string",
+                "minLength": 1,
+                "format": "path"
+              },
+              "refuse": {
+                "type": "object",
+                "properties": {
+                  "packages": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "regex"
+                  },
+                  "specifiers": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "regex"
+                  },
+                  "extensions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "entries",
+              "within",
+              "refuse",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "conventions": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "glob"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "glob"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "format": "regex"
+              },
+              "imports": {
+                "type": "object",
+                "properties": {
+                  "allow": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "format": "glob"
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  },
+                  "deny": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "format": "glob"
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              "exports": {
+                "type": "object",
+                "properties": {
+                  "require": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  },
+                  "allow": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "regex"
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              "companions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "format": "path"
+                    },
+                    "role": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "javascript": {
+                "type": "object",
+                "properties": {
+                  "nodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "select": {
+                          "type": "object",
+                          "properties": {
+                            "kinds": {
+                              "type": "array",
+                              "items": {
+                                "enum": [
+                                  "function",
+                                  "class",
+                                  "interface",
+                                  "type",
+                                  "variable",
+                                  "method",
+                                  "property",
+                                  "constructor"
+                                ]
+                              },
+                              "minItems": 1,
+                              "uniqueItems": true
+                            },
+                            "names": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "minItems": 1,
+                              "uniqueItems": true
+                            },
+                            "exported": {
+                              "type": "boolean"
+                            },
+                            "topLevel": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "kinds"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "count": {
+                          "type": "object",
+                          "properties": {
+                            "min": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "select",
+                        "count"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  },
+                  "assignable": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "export": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "contract": {
+                          "type": "object",
+                          "properties": {
+                            "file": {
+                              "type": "string",
+                              "minLength": 1,
+                              "format": "path"
+                            },
+                            "symbol": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "file",
+                            "symbol"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "tsconfig": {
+                          "type": "string",
+                          "minLength": 1,
+                          "format": "path"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "export",
+                        "contract",
+                        "tsconfig"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  },
+                  "budgets": {
+                    "type": "object",
+                    "properties": {
+                      "functionLines": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "maxParameters": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "maxNesting": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "duplicateBlocks": {
+                        "type": "object",
+                        "properties": {
+                          "minStatements": {
+                            "type": "integer",
+                            "minimum": 2
+                          },
+                          "maxCopies": {
+                            "type": "integer",
+                            "minimum": 1
+                          }
+                        },
+                        "required": [
+                          "minStatements",
+                          "maxCopies"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              },
+              "scaffold": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "path"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "companions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "format": "path"
+                        },
+                        "content": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "files"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "files",
+        "roles"
+      ],
+      "additionalProperties": false
+    },
+    "policyTests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "path"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "content"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "edits": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "format": "path"
+                      },
+                      "content": {
+                        "type": "string"
+                      },
+                      "delete": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "expect": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "pass",
+                        "violation"
+                      ]
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "rule": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "path": {
+                            "type": "string",
+                            "minLength": 1,
+                            "format": "path"
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1
+                          }
+                        },
+                        "required": [
+                          "rule"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "minItems": 1,
+                      "uniqueItems": true
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "edits",
+                "expect"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "files",
+          "cases"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "javascript": {
+      "type": "object"
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "format": "glob"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "max": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expires": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        "required": [
+          "id",
+          "rules",
+          "files",
+          "reason",
+          "max"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "protected": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "glob"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        },
+        "versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "cwd": {
+            "type": "string",
+            "minLength": 1,
+            "format": "path"
+          },
+          "format": {
+            "enum": [
+              "junit",
+              "plumb-json"
+            ]
+          },
+          "report": {
+            "enum": [
+              "stdout",
+              "file"
+            ]
+          },
+          "minTests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxSkipped": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3600000
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "inheritEnv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "minItems": 0,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "command",
+          "format"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schemaVersion"
+  ],
+  "additionalProperties": false
+}

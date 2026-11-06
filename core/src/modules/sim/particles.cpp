@@ -1,26 +1,27 @@
 #include "modules/sim/particles.h"
 
+#include <cstddef>
 #include <numeric>
 
 namespace grav {
 
-void Particles::resize(std::size_t n) {
-    positions.assign(n, Vec3{});
-    velocities.assign(n, Vec3{});
-    accelerations.assign(n, Vec3{});
-    masses.assign(n, 1.0F);
-    charges.assign(n, 0.0F);
-    ids.resize(n);
-    std::iota(ids.begin(), ids.end(), std::size_t{0});
+void resize_particles(Particles& particles, std::size_t count) {
+  particles.positions.assign(count, Vec3{});
+  particles.velocities.assign(count, Vec3{});
+  particles.accelerations.assign(count, Vec3{});
+  particles.masses.assign(count, 1.0F);
+  particles.charges.assign(count, 0.0F);
+  particles.ids.resize(count);
+  std::iota(particles.ids.begin(), particles.ids.end(), std::size_t{0});
 }
 
-void Particles::clear() {
-    positions.clear();
-    velocities.clear();
-    accelerations.clear();
-    masses.clear();
-    charges.clear();
-    ids.clear();
+void clear_particles(Particles& particles) {
+  particles.positions.clear();
+  particles.velocities.clear();
+  particles.accelerations.clear();
+  particles.masses.clear();
+  particles.charges.clear();
+  particles.ids.clear();
 }
 
-}
+} // namespace grav

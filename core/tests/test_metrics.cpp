@@ -1,25 +1,29 @@
-#include <catch2/catch_test_macros.hpp>
-
-#include <chrono>
-#include <thread>
-
 #include "modules/metrics/metrics.h"
 
+#include <catch2/catch_test_macros.hpp>
+#include <chrono>
+#include <cstddef>
+#include <thread>
+
 TEST_CASE("metrics tracker reports zeros initially", "[metrics]") {
-    grav::MetricsTracker m;
-    const auto snap = m.snapshot();
-    REQUIRE(snap.fps == 0.0F);
-    REQUIRE(snap.frame_time_ms == 0.0F);
-    REQUIRE(snap.pairs_per_sec == 0.0F);
+  const grav::MetricsTracker tracker;
+  const auto snap = tracker.snapshot();
+  REQUIRE(snap.fps == 0.0F);
+  REQUIRE(snap.frame_time_ms == 0.0F);
+  REQUIRE(snap.pairs_per_sec == 0.0F);
 }
 
 TEST_CASE("metrics tracker fps becomes positive after frames", "[metrics]") {
-    grav::MetricsTracker m;
-    for (int i = 0; i < 5; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        m.record_frame(64);
-    }
-    const auto snap = m.snapshot();
-    REQUIRE(snap.fps > 0.0F);
-    REQUIRE(snap.frame_time_ms > 0.0F);
+  constexpr int frame_count = 5;
+  constexpr std::chrono::milliseconds frame_delay{5};
+  constexpr std::size_t particle_count = 64;
+
+  grav::MetricsTracker tracker;
+  for (int i = 0; i < frame_count; ++i) {
+    std::this_thread::sleep_for(frame_delay);
+    tracker.record_frame(particle_count);
+  }
+  const auto snap = tracker.snapshot();
+  REQUIRE(snap.fps > 0.0F);
+  REQUIRE(snap.frame_time_ms > 0.0F);
 }

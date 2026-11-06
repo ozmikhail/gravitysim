@@ -149,7 +149,7 @@ bool find_collisions(CudaSimState& state, const float* positions, int n, float r
 }
 
 void cuda_step(Simulation& sim) {
-    const std::size_t n = sim.particles.count();
+    const std::size_t n = count_particles(sim.particles);
     if (n == 0) {
         return;
     }
@@ -218,7 +218,7 @@ void cuda_step(Simulation& sim) {
         merge_collision_groups(sim.particles, s->parents);
         if (s->position_interop != nullptr) {
             GRAV_CUDA_CHECK(cudaMemcpyAsync(
-                d_pos, sim.particles.positions.data(), sim.particles.count() * sizeof(Vec3),
+                d_pos, sim.particles.positions.data(), count_particles(sim.particles) * sizeof(Vec3),
                 cudaMemcpyHostToDevice, s->stream
             ));
         }
@@ -235,7 +235,7 @@ void cuda_download_positions(Simulation& sim) {
     auto& state = *state_of(sim);
     const void* positions = state.position_interop->map(state.stream);
     GRAV_CUDA_CHECK(cudaMemcpyAsync(
-        sim.particles.positions.data(), positions, sim.particles.count() * sizeof(Vec3),
+        sim.particles.positions.data(), positions, count_particles(sim.particles) * sizeof(Vec3),
         cudaMemcpyDeviceToHost, state.stream
     ));
     state.position_interop->unmap(state.stream);

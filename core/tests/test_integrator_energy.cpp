@@ -1,66 +1,75 @@
-#include <catch2/catch_test_macros.hpp>
+#include "modules/sim/integrator.h"
+#include "modules/sim/params.h"
+#include "modules/sim/particles.h"
+#include "modules/sim/simulation.h"
 
+#include <catch2/catch_message.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
 
-#include "modules/sim/sim.h"
-
 namespace {
 
+constexpr float HALF = 0.5F;
+constexpr float SOFTENING = 0.001F;
+constexpr float SEPARATION = 0.4F;
+constexpr float SATELLITE_MASS = 0.001F;
+
 float total_energy(const grav::Simulation& sim) {
-    const auto& p = sim.particles;
-    float kinetic = 0.0F;
-    for (std::size_t i = 0; i < p.count(); ++i) {
-        kinetic += 0.5F * p.masses[i] * grav::length_squared(p.velocities[i]);
-    }
+  const auto& particles = sim.particles;
+  float kinetic = 0.0F;
+  for (std::size_t i = 0; i < count_particles(particles); ++i) {
+    kinetic += HALF * particles.masses.at(i) * grav::length_squared(particles.velocities.at(i));
+  }
 
-    const float eps2 = sim.params.softening * sim.params.softening;
-    float potential = 0.0F;
-    for (std::size_t i = 0; i < p.count(); ++i) {
-        for (std::size_t j = i + 1; j < p.count(); ++j) {
-            const grav::Vec3 d = p.positions[j] - p.positions[i];
-            const float r = std::sqrt(grav::length_squared(d) + eps2);
-            potential -= sim.params.gravity * p.masses[i] * p.masses[j] / r;
-        }
+  const float eps2 = sim.params.softening * sim.params.softening;
+  float potential = 0.0F;
+  for (std::size_t i = 0; i < count_particles(particles); ++i) {
+    for (std::size_t j = i + 1; j < count_particles(particles); ++j) {
+      const grav::Vec3 separation = particles.positions.at(j) - particles.positions.at(i);
+      const float distance = std::sqrt(grav::length_squared(separation) + eps2);
+      potential -= sim.params.gravity * particles.masses.at(i) * particles.masses.at(j) / distance;
     }
-    return kinetic + potential;
+  }
+  return kinetic + potential;
 }
 
-float run_two_body(grav::Integrator integrator, int steps, float dt) {
-    grav::Simulation sim;
-    sim.backend = grav::Backend::Cpu;
-    sim.params.dt = dt;
-    sim.params.gravity = 1.0F;
-    sim.params.softening = 0.001F;
-    sim.params.integrator = integrator;
+float run_two_body(grav::Integrator integrator, float timestep) {
+  constexpr int steps = 4000;
 
-    sim.particles.resize(2);
-    sim.particles.positions[0] = {0.0F, 0.0F, 0.0F};
-    sim.particles.positions[1] = {0.4F, 0.0F, 0.0F};
-    sim.particles.velocities[0] = {0.0F, 0.0F, 0.0F};
-    sim.particles.velocities[1] = {0.0F, std::sqrt(1.0F / 0.4F), 0.0F};
-    sim.particles.masses[0] = 1.0F;
-    sim.particles.masses[1] = 0.001F;
+  grav::Simulation sim;
+  sim.backend = grav::Backend::Cpu;
+  sim.params.dt = timestep;
+  sim.params.gravity = 1.0F;
+  sim.params.softening = SOFTENING;
+  sim.params.integrator = integrator;
 
-    const float e0 = total_energy(sim);
-    for (int i = 0; i < steps; ++i) {
-        grav::step(sim);
-    }
-    const float e1 = total_energy(sim);
-    return std::abs(e1 - e0) / std::abs(e0);
+  resize_particles(sim.particles, 2);
+  sim.particles.positions.at(0) = {.x = 0.0F, .y = 0.0F, .z = 0.0F};
+  sim.particles.positions.at(1) = {.x = SEPARATION, .y = 0.0F, .z = 0.0F};
+  sim.particles.velocities.at(0) = {.x = 0.0F, .y = 0.0F, .z = 0.0F};
+  sim.particles.velocities.at(1) = {.x = 0.0F, .y = std::sqrt(1.0F / SEPARATION), .z = 0.0F};
+  sim.particles.masses.at(0) = 1.0F;
+  sim.particles.masses.at(1) = SATELLITE_MASS;
+
+  const float energy_before = total_energy(sim);
+  for (int i = 0; i < steps; ++i) {
+    grav::step(sim);
+  }
+  const float energy_after = total_energy(sim);
+  return std::abs(energy_after - energy_before) / std::abs(energy_before);
 }
 
-}
+} // namespace
 
 TEST_CASE("leapfrog drifts less than euler on a 2-body orbit", "[integrator]") {
-    constexpr int steps = 4000;
-    constexpr float dt = 0.005F;
+  constexpr float timestep = 0.005F;
 
-    const float drift_euler = run_two_body(grav::Integrator::Euler, steps, dt);
-    const float drift_leapfrog = run_two_body(grav::Integrator::Leapfrog, steps, dt);
+  const float drift_euler = run_two_body(grav::Integrator::Euler, timestep);
+  const float drift_leapfrog = run_two_body(grav::Integrator::Leapfrog, timestep);
 
-    INFO("euler drift = " << drift_euler);
-    INFO("leapfrog drift = " << drift_leapfrog);
+  INFO("euler drift = " << drift_euler);
+  INFO("leapfrog drift = " << drift_leapfrog);
 
-    REQUIRE(drift_leapfrog < drift_euler);
+  REQUIRE(drift_leapfrog < drift_euler);
 }

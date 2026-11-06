@@ -1,12 +1,13 @@
-#pragma once
+#ifndef GRAV_MODULES_SIM_SIMULATION_H
+#define GRAV_MODULES_SIM_SIMULATION_H
+
+#include "modules/sim/params.h"
+#include "modules/sim/particles.h"
 
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string_view>
-
-#include "modules/sim/params.h"
-#include "modules/sim/particles.h"
 
 namespace grav {
 
@@ -14,24 +15,26 @@ using BackendStateDeleter = void (*)(void*);
 using BackendStatePtr = std::unique_ptr<void, BackendStateDeleter>;
 
 inline BackendStatePtr empty_backend_state() {
-    return {nullptr, +[](void*) {}};
+  return {nullptr, +[](void*) {}};
 }
 
 struct Simulation {
-    Backend backend = Backend::Cpu;
-    Particles particles;
-    SimParams params;
-    BackendStatePtr backend_state = empty_backend_state();
-    std::uint32_t output_vbo = 0;
-    bool positions_on_device = false;
+  Backend backend = Backend::Cpu;
+  Particles particles;
+  SimParams params;
+  BackendStatePtr backend_state = empty_backend_state();
+  std::uint32_t output_vbo = 0;
+  bool positions_on_device = false;
 };
 
 [[nodiscard]] inline Backend active_backend(const Simulation& sim) noexcept {
-    return sim.params.force_model == ForceModel::Direct ? sim.backend : Backend::Cpu;
+  return sim.params.force_model == ForceModel::Direct ? sim.backend : Backend::Cpu;
 }
 
 void sync_positions(Simulation& sim);
 void step(Simulation& sim);
 void reset(Simulation& sim, std::string_view scenario_name, std::size_t count);
 
-}
+} // namespace grav
+
+#endif // GRAV_MODULES_SIM_SIMULATION_H

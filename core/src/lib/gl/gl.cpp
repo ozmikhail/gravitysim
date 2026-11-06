@@ -1,78 +1,84 @@
 #include "lib/gl/gl.h"
 
-#include <glad/gl.h>
+#include "error.h"
 
 #include <GLFW/glfw3.h>
-
+#include <cstddef>
 #include <format>
+#include <glad/gl.h>
+#include <iostream>
+#include <iterator>
+#include <string>
 #include <string_view>
-
-#include "error.h"
+#include <vector>
 
 namespace grav::gl {
 
 namespace {
 
-void GLAPIENTRY debug_callback(
-    GLenum,
-    GLenum type,
-    GLuint,
-    GLenum severity,
-    GLsizei,
-    const GLchar* message,
-    const void*
-) {
-    if (type == GL_DEBUG_TYPE_PUSH_GROUP || type == GL_DEBUG_TYPE_POP_GROUP) return;
-    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
-    std::fputs("gl debug: ", stderr);
-    std::fputs(message != nullptr ? message : "(null)", stderr);
-    std::fputc('\n', stderr);
+std::string gl_string(GLenum name) {
+  const GLubyte* text = glGetString(name);
+  if (text == nullptr) {
+    return "(null)";
+  }
+  const GLubyte* end = text;
+  while (*end != 0) {
+    end = std::next(end);
+  }
+  return {text, end};
 }
 
-}
+} // namespace
 
 void init() {
-    if (gladLoadGL(reinterpret_cast<GLADloadfunc>(&glfwGetProcAddress)) == 0) {
-        throw AppError::dependency_unavailable("gl: glad load failed");
-    }
+  if (gladLoadGL(glfwGetProcAddress) == 0) {
+    throw AppError::dependency_unavailable("gl: glad load failed");
+  }
 
-    if (GLAD_GL_VERSION_4_3 != 0) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(&debug_callback, nullptr);
-    }
+  if (GLAD_GL_VERSION_4_3 != 0) {
+    const GLDEBUGPROC debug_callback = [](GLenum /*source*/, GLenum type, GLuint /*id*/,
+                                          GLenum severity, GLsizei /*length*/,
+                                          const GLchar* message, const void* /*user_param*/) {
+      if (type == GL_DEBUG_TYPE_PUSH_GROUP || type == GL_DEBUG_TYPE_POP_GROUP) {
+        return;
+      }
+      if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) {
+        return;
+      }
+      std::cerr << "gl debug: " << (message != nullptr ? message : "(null)") << '\n';
+    };
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(debug_callback, nullptr);
+  }
 }
 
-void check(std::string_view op) {
-    const GLenum err = glGetError();
-    if (err != GL_NO_ERROR) {
-        throw AppError::dependency_unavailable(std::format("gl: {}: 0x{:x}", op, err));
-    }
+void check(std::string_view operation) {
+  const GLenum err = glGetError();
+  if (err != GL_NO_ERROR) {
+    throw AppError::dependency_unavailable(std::format("gl: {}: 0x{:x}", operation, err));
+  }
 }
 
-const char* renderer() {
-    return reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-}
+std::string renderer() { return gl_string(GL_RENDERER); }
 
-const char* version() {
-    return reinterpret_cast<const char*>(glGetString(GL_VERSION));
-}
+std::string version() { return gl_string(GL_VERSION); }
 
 void read_rgb(int width, int height, std::vector<unsigned char>& rgb) {
-    rgb.resize(static_cast<std::size_t>(width) * height * 3);
-    GLint alignment = 0;
-    glGetIntegerv(GL_PACK_ALIGNMENT, &alignment);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
-    glPixelStorei(GL_PACK_ALIGNMENT, alignment);
-    check("read framebuffer");
+  rgb.resize(static_cast<std::size_t>(width) * height * 3);
+  GLint alignment = 0;
+  glGetIntegerv(GL_PACK_ALIGNMENT, &alignment);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
+  glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+  check("read framebuffer");
 }
 
 void set_viewport(int width, int height) { glViewport(0, 0, width, height); }
 
-void clear(float r, float g, float b, float a) {
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void clear(float red, float green, float blue, float alpha) {
+  glClearColor(red, green, blue, alpha);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-}
+} // namespace grav::gl

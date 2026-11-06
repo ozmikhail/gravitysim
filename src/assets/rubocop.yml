@@ -1,0 +1,48 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rspec
+
+AllCops:
+  EnabledByDefault: true # every cop, including those rubocop leaves off by default
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 3.3
+  Exclude:
+    - "bin/**/*"
+    - "node_modules/**/*"
+    - "tmp/**/*"
+    - "vendor/**/*"
+
+Layout/LineLength:
+  Max: 100
+
+Metrics/ClassLength:
+  Max: 400 # the same ceiling plumb sets on a script module
+
+Metrics/ModuleLength:
+  Max: 400
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: always_true
+
+Style/Copyright:
+  Enabled: false # a license lives in LICENSE, not a header in every file
+
+Style/InlineComment:
+  Enabled: false # a trailing comment is allowed in every plumb language
+
+Style/MissingElse:
+  Enabled: false # contradicts Style/EmptyElse, which rubocop also enables
+
+Lint/ConstantResolution:
+  Enabled: false # demands a leading :: on every constant, against ruby's own lookup
+
+Style/MethodCallWithArgsParentheses:
+  AllowedMethods:
+    - puts
+    - raise
+    - require
+    - require_relative

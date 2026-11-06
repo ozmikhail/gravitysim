@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "preset": "portable",
+  "projects": [],
+  "files": {
+    "required": [
+      "AGENTS.md",
+      "README.md",
+      "plumb.schema.json"
+    ],
+    "forbidden": [
+      "src/**/*.ts",
+      "packages/javascript/src/**/*.ts"
+    ],
+    "names": [
+      {
+        "files": [
+          "src/**/*.mjs",
+          "bin/**/*.mjs",
+          "scripts/**/*.mjs",
+          "test/**/*.mjs",
+          "packages/**/*.mjs"
+        ],
+        "pattern": "^[a-z][a-z0-9-]*(?:\\.test)?\\.mjs$",
+        "reason": "runtime and tests use portable, consistently named JavaScript modules"
+      }
+    ]
+  },
+  "docs": {
+    "index": "README.md"
+  },
+  "policy": {
+    "protected": [
+      "src/**",
+      "bin/**",
+      "scripts/**",
+      "packages/javascript/**",
+      "plumb.schema.json",
+      "AGENTS.md"
+    ]
+  }
+}

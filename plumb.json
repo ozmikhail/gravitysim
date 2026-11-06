@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "preset": "portable",
+  "exclude": [
+    {
+      "files": ["tools/plumb/**"],
+      "reason": "vendored checker, verified upstream"
+    },
+    {
+      "files": ["build/**"],
+      "reason": "generated build tree and fetched dependencies"
+    },
+    {
+      "files": ["preview.gif"],
+      "reason": "binary demo capture"
+    }
+  ],
+  "projects": [
+    {
+      "root": ".",
+      "profile": "cpp",
+      "compileCommands": "build"
+    }
+  ]
+}

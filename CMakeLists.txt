@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 
 project(gravity_simulator
     DESCRIPTION "CUDA-accelerated real-time N-body gravitational simulator"
@@ -27,7 +27,13 @@ if(BUILD_CUDA)
 endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
-set(_grav_venv_dir ${CMAKE_BINARY_DIR}/_grav_venv)
+# Kept outside the repository: venv symlinks inside build/ make plumb's file inventory fail.
+if(DEFINED ENV{XDG_CACHE_HOME})
+    set(_grav_cache_dir $ENV{XDG_CACHE_HOME})
+else()
+    set(_grav_cache_dir $ENV{HOME}/.cache)
+endif()
+set(_grav_venv_dir ${_grav_cache_dir}/gravitysim/venv)
 if(NOT EXISTS ${_grav_venv_dir}/bin/python)
     message(STATUS "creating build venv at ${_grav_venv_dir}")
     execute_process(
@@ -55,6 +61,7 @@ FetchContent_Declare(
     tomlplusplus
     GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
     GIT_TAG        v3.4.0
+    SYSTEM
 )
 
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -65,6 +72,7 @@ FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG        3.4
+    SYSTEM
 )
 
 FetchContent_Declare(
@@ -72,12 +80,14 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/Dav1dde/glad.git
     GIT_TAG        v2.0.6
     SOURCE_SUBDIR  cmake
+    SYSTEM
 )
 
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG        v1.91.5
+    SYSTEM
 )
 
 if(BUILD_TESTS)
@@ -85,6 +95,7 @@ if(BUILD_TESTS)
         Catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG        v3.7.1
+        SYSTEM
     )
 endif()
 
@@ -108,6 +119,9 @@ if(NOT OpenMP_CXX_FOUND)
 endif()
 
 glad_add_library(glad_gl_core_43 STATIC API gl:core=4.3)
+# glad supplies the GL declarations; keep GLFW from including a system GL header whatever the include order.
+target_compile_definitions(glfw INTERFACE GLFW_INCLUDE_NONE)
+set_target_properties(glad_gl_core_43 PROPERTIES SYSTEM ON)
 
 add_library(imgui STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
